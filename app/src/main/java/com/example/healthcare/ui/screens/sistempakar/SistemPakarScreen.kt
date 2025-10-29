@@ -1,3 +1,4 @@
+// Di file /ui/screens/sistempakar/SistemPakarScreen.kt
 package com.example.healthcare.ui.screens.sistempakar
 
 import androidx.compose.foundation.Image
@@ -5,6 +6,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons // <-- TAMBAHKAN IMPORT
+import androidx.compose.material.icons.filled.ArrowBack // <-- TAMBAHKAN IMPORT
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,12 +27,20 @@ import com.example.healthcare.ui.theme.HealthcareTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SistemPakarScreen(
-    onMulaiClick: (() -> Unit)? = null
+    // UBAH INI: Sesuaikan parameter
+    onMulaiClick: () -> Unit,
+    onBackClick: () -> Unit
 ) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Sistem Pakar") }
+                title = { Text("Sistem Pakar") },
+                // UBAH INI: Tambahkan tombol kembali
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Kembali")
+                    }
+                }
             )
         }
     ) { padding ->
@@ -40,7 +51,7 @@ fun SistemPakarScreen(
             contentPadding = PaddingValues(bottom = 16.dp)
         ) {
             item {
-                // ✅ Header Image dengan teks di atasnya
+                // ... (Header Image, tidak ada perubahan) ...
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -86,6 +97,7 @@ fun SistemPakarScreen(
             }
 
             item {
+                // ... (Card Pengecekan Gejala, tidak ada perubahan) ...
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -121,7 +133,7 @@ fun SistemPakarScreen(
                             text = "Dapatkan informasi awal tentang kondisi kesehatan\nAnda berdasarkan gejala yang dialami",
                             style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
                             textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
@@ -132,6 +144,7 @@ fun SistemPakarScreen(
             }
 
             item {
+                // ... (Card Cara Menggunakan) ...
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -165,7 +178,8 @@ fun SistemPakarScreen(
                         Spacer(modifier = Modifier.height(24.dp))
 
                         Button(
-                            onClick = { onMulaiClick?.invoke() },
+                            // UBAH INI: Gunakan onMulaiClick
+                            onClick = onMulaiClick,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(bottom = 8.dp)
@@ -181,6 +195,7 @@ fun SistemPakarScreen(
             }
 
             item {
+                // ... (Card Riwayat Pengecekan, tidak ada perubahan) ...
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -280,6 +295,7 @@ fun SistemPakarScreen(
 @Composable
 fun PreviewSistemPakarScreen() {
     HealthcareTheme {
-        SistemPakarScreen()
+        // UBAH INI: Beri lambda kosong untuk preview
+        SistemPakarScreen(onMulaiClick = {}, onBackClick = {})
     }
 }

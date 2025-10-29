@@ -1,53 +1,33 @@
+// Di file /com/example/healthcare/MainActivity.kt
 package com.example.healthcare
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.Composable
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import com.example.healthcare.ui.screens.sistempakar.*
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Modifier
+// 1. Import AppNavigation yang sudah kita buat
+import com.example.healthcare.ui.navigation.AppNavigation
+// 2. Import Theme aplikasi Anda
+import com.example.healthcare.ui.theme.HealthcareTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            SistemPakarApp()
+            // 3. Gunakan Theme aplikasi Anda
+            HealthcareTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+
+                    AppNavigation()
+                }
+            }
         }
     }
 }
 
-@Composable
-fun SistemPakarApp() {
-    val navController = rememberNavController()
-
-    NavHost(
-        navController = navController,
-        startDestination = "info"
-    ) {
-        composable("info") {
-            InfoScreen(
-                onNext = { navController.navigate("gejala") }
-            )
-        }
-        composable("gejala") {
-            GejalaScreen(
-                onNext = { navController.navigate("kondisi") },
-                onBack = { navController.popBackStack() }
-            )
-        }
-        composable("kondisi") {
-            KondisiScreen(
-                onNext = { navController.navigate("detail") },
-                onBack = { navController.popBackStack() }
-            )
-        }
-        composable("detail") {
-            DetailScreen(
-                onNext = { /* selesai atau ke halaman lain */ },
-                onBack = { navController.popBackStack() }
-            )
-        }
-    }
-}

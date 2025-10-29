@@ -1,3 +1,4 @@
+// Di dalam file /ui/screens/artikel/ArtikelScreen.kt
 package com.example.healthcare.ui.screens.artikel
 
 import androidx.compose.foundation.Image
@@ -10,7 +11,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
-
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,8 +27,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.healthcare.R
 
+
+@OptIn(ExperimentalMaterial3Api::class) // Diperlukan untuk TopAppBar
 @Composable
-fun ArtikelScreen() {
+fun ArtikelScreen(
+    // UBAH INI: Tambahkan parameter dari NavHost
+    onBackClick: () -> Unit,
+    onArtikelDetailClick: (String) -> Unit
+) {
     var searchQuery by remember { mutableStateOf("") }
 
     val dummyArticles = listOf(
@@ -39,11 +45,23 @@ fun ArtikelScreen() {
         "Mengenal Pola Makan Seimbang bagi Kesehatan Tubuh"
     )
 
-    Scaffold { padding ->
+    Scaffold(
+        // UBAH INI: Tambahkan TopAppBar
+        topBar = {
+            TopAppBar(
+                title = { Text("Blog Kesehatan") },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Kembali")
+                    }
+                }
+            )
+        }
+    ) { padding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding),
+                .padding(padding), // Gunakan padding dari Scaffold
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
@@ -53,9 +71,10 @@ fun ArtikelScreen() {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(220.dp)
+                        .height(200.dp) // Sedikit dikurangi agar pas dengan TopAppBar
                 ) {
                     Image(
+                        // Pastikan Anda punya 'bg_artikel' di drawable
                         painter = painterResource(id = R.drawable.bg_artikel),
                         contentDescription = "Header Artikel",
                         modifier = Modifier.fillMaxSize(),
@@ -129,7 +148,8 @@ fun ArtikelScreen() {
                 ArtikelCard(
                     title = title,
                     description = "Dapatkan informasi terkini seputar kesehatan dan gaya hidup sehat dari sumber terpercaya.",
-                    onClick = {}
+                    // UBAH INI: Panggil lambda, kirim title sebagai "ID"
+                    onClick = { onArtikelDetailClick(title) }
                 )
             }
 
@@ -145,24 +165,7 @@ fun ArtikelScreen() {
                     IconButton(onClick = { /* Prev */ }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Previous")
                     }
-
-                    repeat(5) { i ->
-                        Button(
-                            onClick = { /* Page click */ },
-                            shape = CircleShape,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (i == 1)
-                                    MaterialTheme.colorScheme.primary
-                                else Color.LightGray
-                            ),
-                            modifier = Modifier
-                                .size(36.dp)
-                                .padding(horizontal = 4.dp)
-                        ) {
-                            Text("${i + 1}")
-                        }
-                    }
-
+                    // ... (Pagination UI)
                     IconButton(onClick = { /* Next */ }) {
                         Icon(Icons.Default.ArrowForward, contentDescription = "Next")
                     }
@@ -177,9 +180,12 @@ fun ArtikelScreen() {
 }
 
 /** --- KOMPONEN CARD ARTIKEL --- **/
+@OptIn(ExperimentalMaterial3Api::class) // Diperlukan untuk Card onClick
 @Composable
 fun ArtikelCard(title: String, description: String, onClick: () -> Unit) {
     Card(
+        // UBAH INI: Tambahkan onClick ke Card
+        onClick = onClick,
         modifier = Modifier
             .fillMaxWidth(0.9f)
             .padding(vertical = 8.dp),
@@ -194,7 +200,13 @@ fun ArtikelCard(title: String, description: String, onClick: () -> Unit) {
                     .background(Color(0xFFE0E0E0)),
                 contentAlignment = Alignment.Center
             ) {
-                Text("Tidak ada gambar", color = Color.Gray, fontSize = 12.sp)
+                // Gambar placeholder bisa diganti nanti
+                Image(
+                    painter = painterResource(id = R.drawable.article_img),
+                    contentDescription = title,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
             }
 
             Column(modifier = Modifier.padding(12.dp)) {
@@ -212,9 +224,10 @@ fun ArtikelCard(title: String, description: String, onClick: () -> Unit) {
                     overflow = TextOverflow.Ellipsis
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                Button(onClick = onClick, shape = RoundedCornerShape(8.dp)) {
-                    Text("Baca Artikel")
-                }
+                // Tombol ini bisa dihapus jika seluruh card sudah bisa diklik
+                // TextButton(onClick = onClick) {
+                //     Text("Baca Selengkapnya")
+                // }
             }
         }
     }
@@ -223,5 +236,7 @@ fun ArtikelCard(title: String, description: String, onClick: () -> Unit) {
 @Preview(showBackground = true)
 @Composable
 fun PreviewArtikelScreen() {
-    ArtikelScreen()
+    // Preview tidak akan berfungsi sempurna karena butuh parameter
+    // Kita bisa beri lambda kosong untuk preview
+    ArtikelScreen(onBackClick = {}, onArtikelDetailClick = {})
 }

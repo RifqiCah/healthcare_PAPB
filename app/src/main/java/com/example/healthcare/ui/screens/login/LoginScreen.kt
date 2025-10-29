@@ -1,3 +1,4 @@
+// Di dalam file /ui/screens/login/LoginScreen.kt
 package com.example.healthcare.ui.screens.login
 
 import androidx.compose.foundation.background
@@ -11,12 +12,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
+import com.example.healthcare.ui.theme.HealthcareTheme
+
+// Hapus import NavController karena sudah tidak dipakai
 
 @Composable
-fun LoginScreen(navController: NavController) {
+fun LoginScreen(
+    // UBAH INI: Terima lambda, bukan NavController
+    onLoginSuccess: () -> Unit,
+    onRegisterClick: () -> Unit
+) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
@@ -51,7 +59,9 @@ fun LoginScreen(navController: NavController) {
                 ) {
                     Text(text = "Belum memiliki akun?")
                     Spacer(modifier = Modifier.width(4.dp))
-                    TextButton(onClick = { navController.navigate("register") }) {
+
+                    // UBAH INI: Panggil lambda onRegisterClick
+                    TextButton(onClick = onRegisterClick) {
                         Text("Daftar Sekarang", color = MaterialTheme.colorScheme.primary)
                     }
                 }
@@ -115,9 +125,9 @@ fun LoginScreen(navController: NavController) {
                 Button(
                     onClick = {
                         // TODO: Validasi login sebenarnya
-                        navController.navigate("home") {
-                            popUpTo("login") { inclusive = true }
-                        }
+
+                        // UBAH INI: Panggil lambda onLoginSuccess
+                        onLoginSuccess()
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -125,5 +135,16 @@ fun LoginScreen(navController: NavController) {
                 }
             }
         }
+    }
+}
+
+@Preview(showSystemUi = true, showBackground = true)
+@Composable
+fun PreviewLoginScreen() {
+    HealthcareTheme {
+        LoginScreen(
+            onLoginSuccess = {},
+            onRegisterClick = {}
+        )
     }
 }

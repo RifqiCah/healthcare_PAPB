@@ -1,6 +1,5 @@
+// Di dalam file /ui/screens/register/RegisterScreen.kt
 package com.example.healthcare.ui.screens.register
-
-
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -14,12 +13,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
+import com.example.healthcare.ui.theme.HealthcareTheme
+
+// Hapus import NavController, sudah tidak perlu
+// import androidx.navigation.NavController
 
 @Composable
-fun RegisterScreen(navController: NavController) {
+fun RegisterScreen(
+    // UBAH INI: Ganti NavController dengan lambda
+    onRegisterSuccess: () -> Unit,
+    onBackClick: () -> Unit
+) {
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -56,14 +63,16 @@ fun RegisterScreen(navController: NavController) {
                 ) {
                     Text(text = "Sudah memiliki akun?")
                     Spacer(modifier = Modifier.width(4.dp))
-                    TextButton(onClick = { navController.navigate("login") }) {
+
+                    // UBAH INI: Panggil lambda onBackClick
+                    TextButton(onClick = onBackClick) {
                         Text("Login Sekarang", color = MaterialTheme.colorScheme.primary)
                     }
                 }
 
                 // Tombol Google (placeholder)
                 Button(
-                    onClick = {  },
+                    onClick = { /* TODO: Google Sign-Up */ },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 8.dp),
@@ -122,10 +131,10 @@ fun RegisterScreen(navController: NavController) {
 
                 Button(
                     onClick = {
+                        // TODO: Validasi data registrasi di sini
 
-                        navController.navigate("home") {
-                            popUpTo("register") { inclusive = true }
-                        }
+                        // UBAH INI: Panggil lambda onRegisterSuccess
+                        onRegisterSuccess()
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -143,5 +152,20 @@ fun RegisterScreen(navController: NavController) {
                 )
             }
         }
+    }
+}
+
+@Preview(showSystemUi = true, showBackground = true)
+@Composable
+fun PreviewRegisterScreen() {
+    HealthcareTheme {
+        RegisterScreen(
+            onRegisterSuccess = {
+                // Aksi ketika register berhasil (dummy untuk preview)
+            },
+            onBackClick = {
+                // Aksi ketika klik back/login (dummy untuk preview)
+            }
+        )
     }
 }

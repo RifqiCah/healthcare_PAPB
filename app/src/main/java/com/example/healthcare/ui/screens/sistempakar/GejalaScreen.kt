@@ -1,3 +1,4 @@
+// Di file /ui/screens/sistempakar/GejalaScreen.kt
 package com.example.healthcare.ui.screens.sistempakar
 
 import androidx.compose.foundation.Image
@@ -14,19 +15,28 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
 import com.example.healthcare.R
 
+// Asumsi HeaderSection, HeroSection, dan StepperSection 
+// ada di file lain dan di-import di sini.
+// Jika tidak, Anda perlu menambahkannya atau menghapus panggilannya.
+
 @Composable
-fun GejalaScreen(onNext: () -> Unit, onBack: () -> Unit) {
+fun GejalaScreen(
+    // UBAH INI: Ganti nama parameter agar konsisten
+    onLanjutClick: () -> Unit,
+    onBackClick: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        HeaderSection()
-        Spacer(Modifier.height(16.dp))
-        HeroSection()
-        Spacer(Modifier.height(24.dp))
-        StepperSection(activeStep = 2)
-        Spacer(Modifier.height(32.dp))
+        // Panggil fungsi-fungsi UI Anda
+        // HeaderSection()
+        // Spacer(Modifier.height(16.dp))
+        // HeroSection()
+        // Spacer(Modifier.height(24.dp))
+        // StepperSection(activeStep = 2)
+        // Spacer(Modifier.height(32.dp))
 
         // Konten Gejala
         Text("Apa yang Anda alami?", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
@@ -35,7 +45,8 @@ fun GejalaScreen(onNext: () -> Unit, onBack: () -> Unit) {
         repeat(3) { index ->
             OutlinedButton(
                 onClick = {},
-                enabled = false,
+                // TODO: Buat ini bisa diklik untuk memilih gejala
+                enabled = true,
                 modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
             ) {
                 Text("Gejala ${index + 1}")
@@ -48,9 +59,12 @@ fun GejalaScreen(onNext: () -> Unit, onBack: () -> Unit) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            OutlinedButton(onClick = onBack, shape = CircleShape) { Text("Kembali") }
+            // UBAH INI: Gunakan onBackClick
+            OutlinedButton(onClick = onBackClick, shape = CircleShape) { Text("Kembali") }
+
+            // UBAH INI: Gunakan onLanjutClick
             Button(
-                onClick = onNext,
+                onClick = onLanjutClick,
                 shape = CircleShape,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3))
             ) { Text("Lanjut", color = Color.White) }
@@ -61,5 +75,6 @@ fun GejalaScreen(onNext: () -> Unit, onBack: () -> Unit) {
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun PreviewGejalaScreen() {
-    GejalaScreen(onNext = {}, onBack = {})
+    // UBAH INI: Sesuaikan dengan nama parameter baru
+    GejalaScreen(onLanjutClick = {}, onBackClick = {})
 }

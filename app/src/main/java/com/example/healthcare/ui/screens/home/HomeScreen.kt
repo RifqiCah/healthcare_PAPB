@@ -1,3 +1,4 @@
+// Di dalam file /ui/screens/home/HomeScreen.kt
 package com.example.healthcare.ui.screens.home
 
 import androidx.compose.foundation.Image
@@ -15,12 +16,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+import com.example.healthcare.R
+
+
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier) {
+fun HomeScreen(
+    modifier: Modifier = Modifier,
+    // UBAH INI: Tambahkan parameter lambda untuk navigasi
+    onSistemPakarClick: () -> Unit,
+    onArtikelClick: () -> Unit
+) {
     Box(modifier = Modifier.fillMaxSize()) {
         // Background Image
         Image(
-            painter = painterResource(id = R.drawable.bacground),
+            painter = painterResource(id = R.drawable.bg_artikel),
             contentDescription = "Background",
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxWidth().height(240.dp)
@@ -64,7 +73,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
-                    Button(onClick = { }) {
+                    Button(onClick = { /*TODO: Navigasi ke 'Tentang Kita'*/ }) {
                         Text("Tentang Kita")
                     }
                 }
@@ -82,16 +91,37 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            ServiceCard("Sistem Pakar", "Diagnosa Penyakit")
-            ServiceCard("Blog Kesehatan", "Artikel Kesehatan")
-            ServiceCard("Hasil Analisa", "Jurnal Sistem Pakar")
+            // UBAH INI: Tambahkan onClick ke pemanggilan ServiceCard
+            ServiceCard(
+                title = "Sistem Pakar",
+                subtitle = "Diagnosa Penyakit",
+                onClick = onSistemPakarClick // Teruskan perintah navigasi
+            )
+            ServiceCard(
+                title = "Blog Kesehatan",
+                subtitle = "Artikel Kesehatan",
+                onClick = onArtikelClick // Teruskan perintah navigasi
+            )
+            ServiceCard(
+                title = "Hasil Analisa",
+                subtitle = "Jurnal Sistem Pakar",
+                onClick = { /* TODO: Tentukan navigasi untuk 'Hasil Analisa' */ }
+            )
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class) // Perlu ini untuk Card onClick
 @Composable
-fun ServiceCard(title: String, subtitle: String) {
+fun ServiceCard(
+    title: String,
+    subtitle: String,
+    // UBAH INI: Tambahkan parameter onClick
+    onClick: () -> Unit
+) {
     Card(
+        // UBAH INI: Tambahkan onClick ke Card
+        onClick = onClick,
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier
             .fillMaxWidth()

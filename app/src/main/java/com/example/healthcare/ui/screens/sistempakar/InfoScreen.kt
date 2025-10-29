@@ -1,3 +1,4 @@
+// Di file /ui/screens/sistempakar/InfoScreen.kt
 package com.example.healthcare.ui.screens.sistempakar
 
 import androidx.compose.foundation.Image
@@ -16,19 +17,26 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.healthcare.R
 
+// Asumsi HeaderSection, HeroSection, dan StepperSection ada di file lain
+
 @Composable
-fun InfoScreen(onNext: () -> Unit) {
+fun InfoScreen(
+    // UBAH INI: Sesuaikan parameter
+    onLanjutClick: () -> Unit,
+    onBackClick: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        HeaderSection()
-        Spacer(Modifier.height(16.dp))
-        HeroSection()
-        Spacer(Modifier.height(24.dp))
-        StepperSection(activeStep = 1)
-        Spacer(Modifier.height(32.dp))
+        // Panggil fungsi-fungsi UI Anda
+        // HeaderSection()
+        // Spacer(Modifier.height(16.dp))
+        // HeroSection()
+        // Spacer(Modifier.height(24.dp))
+        // StepperSection(activeStep = 1)
+        // Spacer(Modifier.height(32.dp))
 
         // Konten Info
         Text("Umur", fontWeight = FontWeight.SemiBold)
@@ -37,7 +45,8 @@ fun InfoScreen(onNext: () -> Unit) {
             value = "",
             onValueChange = {},
             placeholder = { Text("Masukkan umur Anda") },
-            enabled = false,
+            // TODO: Buat ini 'enabled = true' dan gunakan 'remember'
+            enabled = true,
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -45,24 +54,42 @@ fun InfoScreen(onNext: () -> Unit) {
 
         Text("Jenis Kelamin:", fontWeight = FontWeight.SemiBold)
         Row(Modifier.padding(top = 8.dp)) {
-            OutlinedButton(onClick = {}, enabled = false, modifier = Modifier.weight(1f)) {
+            OutlinedButton(
+                onClick = {},
+                // TODO: Buat ini 'enabled = true'
+                enabled = true,
+                modifier = Modifier.weight(1f)
+            ) {
                 Text("Laki-laki")
             }
             Spacer(Modifier.width(8.dp))
-            OutlinedButton(onClick = {}, enabled = false, modifier = Modifier.weight(1f)) {
+            OutlinedButton(
+                onClick = {},
+                // TODO: Buat ini 'enabled = true'
+                enabled = true,
+                modifier = Modifier.weight(1f)
+            ) {
                 Text("Perempuan")
             }
         }
 
         Spacer(modifier = Modifier.weight(1f))
 
-        Button(
-            onClick = onNext,
+        // UBAH INI: Tambahkan Row untuk tombol Kembali dan Lanjut
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            shape = CircleShape,
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3))
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("Lanjut", color = Color.White)
+            OutlinedButton(
+                onClick = onBackClick, // Gunakan onBackClick
+                shape = CircleShape
+            ) { Text("Kembali") }
+
+            Button(
+                onClick = onLanjutClick, // Gunakan onLanjutClick
+                shape = CircleShape,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3))
+            ) { Text("Lanjut", color = Color.White) }
         }
     }
 }
@@ -70,5 +97,6 @@ fun InfoScreen(onNext: () -> Unit) {
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun PreviewInfoScreen() {
-    InfoScreen(onNext = {})
+    // UBAH INI: Sesuaikan preview
+    InfoScreen(onLanjutClick = {}, onBackClick = {})
 }

@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.kelompok_3.healthcareui"
+    namespace = "com.example.healthcare"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.kelompok_3.healthcareui"
+        applicationId = "com.example.healthcare"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
@@ -50,6 +50,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation("androidx.navigation:navigation-compose:2.7.7")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
