@@ -1,4 +1,4 @@
-package com.kelompok_3.healthcareui
+package com.example.healthcare.ui.screens.home
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
