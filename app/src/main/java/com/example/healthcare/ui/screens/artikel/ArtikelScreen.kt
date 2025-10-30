@@ -6,7 +6,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -15,7 +14,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -27,11 +25,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.healthcare.R
 
-
-@OptIn(ExperimentalMaterial3Api::class) // Diperlukan untuk TopAppBar
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ArtikelScreen(
-    // UBAH INI: Tambahkan parameter dari NavHost
+    modifier: Modifier = Modifier, // ✅ UBAH: Modifier dengan default value
     onBackClick: () -> Unit,
     onArtikelDetailClick: (String) -> Unit
 ) {
@@ -45,146 +42,137 @@ fun ArtikelScreen(
         "Mengenal Pola Makan Seimbang bagi Kesehatan Tubuh"
     )
 
-    Scaffold(
-        // UBAH INI: Tambahkan TopAppBar
-        topBar = {
-            TopAppBar(
-                title = { Text("Blog Kesehatan") },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Kembali")
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding), // Gunakan padding dari Scaffold
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
-        ) {
+    // ✅ HAPUS Scaffold dari sini karena sudah di AppNavigation
+    LazyColumn(
+        modifier = modifier // ✅ GUNAKAN modifier dari parameter
+            .fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Top
+    ) {
 
-            /** --- Hero Section --- **/
-            item {
+        /** --- Hero Section --- **/
+        item {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.bg_artikel),
+                    contentDescription = "Header Artikel",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp) // Sedikit dikurangi agar pas dengan TopAppBar
-                ) {
-                    Image(
-                        // Pastikan Anda punya 'bg_artikel' di drawable
-                        painter = painterResource(id = R.drawable.bg_artikel),
-                        contentDescription = "Header Artikel",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                Brush.verticalGradient(
-                                    listOf(
-                                        Color.Black.copy(alpha = 0.4f),
-                                        Color.Black.copy(alpha = 0.6f)
-                                    )
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(
+                                    Color.Black.copy(alpha = 0.4f),
+                                    Color.Black.copy(alpha = 0.6f)
                                 )
                             )
+                        )
+                )
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .padding(start = 20.dp),
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    Text(
+                        text = "BLOG KESEHATAN",
+                        color = Color.White,
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                     )
-                    Column(
-                        modifier = Modifier
-                            .align(Alignment.CenterStart)
-                            .padding(start = 20.dp),
-                        horizontalAlignment = Alignment.Start
-                    ) {
-                        Text(
-                            text = "BLOG KESEHATAN",
-                            color = Color.White,
-                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                        )
-                        Text(
-                            text = "GAYA HIDUP SEHAT",
-                            color = Color.White,
-                            style = MaterialTheme.typography.titleMedium.copy(fontSize = 18.sp)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-
-            /** --- Search Section --- **/
-            item {
-                Text(
-                    text = "List Artikel Kesehatan",
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = { Text("Cari artikel...") },
-                    modifier = Modifier
-                        .fillMaxWidth(0.9f)
-                        .padding(vertical = 4.dp)
-                )
-
-                Button(
-                    onClick = { /* TODO: search logic */ },
-                    modifier = Modifier
-                        .fillMaxWidth(0.9f)
-                        .padding(vertical = 4.dp)
-                ) {
-                    Text("Cari")
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-            }
-
-            /** --- List Artikel --- **/
-            items(dummyArticles) { title ->
-                ArtikelCard(
-                    title = title,
-                    description = "Dapatkan informasi terkini seputar kesehatan dan gaya hidup sehat dari sumber terpercaya.",
-                    // UBAH INI: Panggil lambda, kirim title sebagai "ID"
-                    onClick = { onArtikelDetailClick(title) }
-                )
-            }
-
-            /** --- Pagination --- **/
-            item {
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 20.dp)
-                ) {
-                    IconButton(onClick = { /* Prev */ }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Previous")
-                    }
-                    // ... (Pagination UI)
-                    IconButton(onClick = { /* Next */ }) {
-                        Icon(Icons.Default.ArrowForward, contentDescription = "Next")
-                    }
+                    Text(
+                        text = "GAYA HIDUP SEHAT",
+                        color = Color.White,
+                        style = MaterialTheme.typography.titleMedium.copy(fontSize = 18.sp)
+                    )
                 }
             }
 
-            item {
-                Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        /** --- Search Section --- **/
+        item {
+            Text(
+                text = "List Artikel Kesehatan",
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                placeholder = { Text("Cari artikel...") },
+                modifier = Modifier
+                    .fillMaxWidth(0.9f)
+                    .padding(vertical = 4.dp)
+            )
+
+            Button(
+                onClick = { /* TODO: search logic */ },
+                modifier = Modifier
+                    .fillMaxWidth(0.9f)
+                    .padding(vertical = 4.dp)
+            ) {
+                Text("Cari")
             }
+
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        /** --- List Artikel --- **/
+        items(dummyArticles) { title ->
+            ArtikelCard(
+                title = title,
+                description = "Dapatkan informasi terkini seputar kesehatan dan gaya hidup sehat dari sumber terpercaya.",
+                onClick = { onArtikelDetailClick(title) }
+            )
+        }
+
+        /** --- Pagination --- **/
+        item {
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 20.dp)
+            ) {
+                IconButton(onClick = { /* Prev */ }) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = "Previous")
+                }
+
+                Text("1", modifier = Modifier.padding(horizontal = 8.dp))
+                Text("2", modifier = Modifier.padding(horizontal = 8.dp))
+                Text("3", modifier = Modifier.padding(horizontal = 8.dp))
+
+                IconButton(onClick = { /* Next */ }) {
+                    Icon(Icons.Default.ArrowForward, contentDescription = "Next")
+                }
+            }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
 
 /** --- KOMPONEN CARD ARTIKEL --- **/
-@OptIn(ExperimentalMaterial3Api::class) // Diperlukan untuk Card onClick
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ArtikelCard(title: String, description: String, onClick: () -> Unit) {
+fun ArtikelCard(
+    title: String,
+    description: String,
+    onClick: () -> Unit
+) {
     Card(
-        // UBAH INI: Tambahkan onClick ke Card
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth(0.9f)
@@ -200,7 +188,6 @@ fun ArtikelCard(title: String, description: String, onClick: () -> Unit) {
                     .background(Color(0xFFE0E0E0)),
                 contentAlignment = Alignment.Center
             ) {
-                // Gambar placeholder bisa diganti nanti
                 Image(
                     painter = painterResource(id = R.drawable.article_img),
                     contentDescription = title,
@@ -223,20 +210,18 @@ fun ArtikelCard(title: String, description: String, onClick: () -> Unit) {
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                // Tombol ini bisa dihapus jika seluruh card sudah bisa diklik
-                // TextButton(onClick = onClick) {
-                //     Text("Baca Selengkapnya")
-                // }
             }
         }
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun PreviewArtikelScreen() {
-    // Preview tidak akan berfungsi sempurna karena butuh parameter
-    // Kita bisa beri lambda kosong untuk preview
-    ArtikelScreen(onBackClick = {}, onArtikelDetailClick = {})
+    MaterialTheme {
+        ArtikelScreen(
+            onBackClick = {},
+            onArtikelDetailClick = {}
+        )
+    }
 }

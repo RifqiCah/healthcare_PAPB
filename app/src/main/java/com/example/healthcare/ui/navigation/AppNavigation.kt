@@ -1,12 +1,15 @@
-// Di dalam folder /ui/navigation/AppNavigation.kt
 package com.example.healthcare.ui.navigation
 
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.healthcare.ui.components.BottomNavBar
 
 // --- Import semua Screen Anda di sini ---
 // Pastikan path-nya sesuai dengan struktur folder Anda
@@ -66,27 +69,35 @@ fun AppNavigation() {
         // == Rute Utama ==
 
         composable(route = AppRoutes.HOME_SCREEN) {
-            HomeScreen(
-                onSistemPakarClick = {
-                    navController.navigate(AppRoutes.SISTEM_PAKAR_SCREEN)
-                },
-                onArtikelClick = {
-                    navController.navigate(AppRoutes.ARTIKEL_SCREEN)
-                }
-                // ... dan navigasi lainnya dari Home
-            )
+            Scaffold(
+                bottomBar = { BottomNavBar(navController) }
+            ) { paddingValues ->
+                HomeScreen(
+                    modifier = Modifier.padding(paddingValues),
+                    onSistemPakarClick = {
+                        navController.navigate(AppRoutes.SISTEM_PAKAR_SCREEN)
+                    },
+                    onArtikelClick = {
+                        navController.navigate(AppRoutes.ARTIKEL_SCREEN)
+                    }
+                )
+            }
         }
 
         composable(route = AppRoutes.ARTIKEL_SCREEN) {
-            ArtikelScreen(
-                onBackClick = {
-                    navController.popBackStack()
-                },
-                onArtikelDetailClick = { artikelId ->
-                    // Navigasi ke detail dengan mengirim ID artikel
-                    navController.navigate("${AppRoutes.ARTIKEL_DETAIL_ROUTE}/$artikelId")
-                }
-            )
+            Scaffold(
+                bottomBar = { BottomNavBar(navController) }
+            ) { paddingValues ->
+                ArtikelScreen(
+                    modifier = Modifier.padding(paddingValues),
+                    onBackClick = {
+                        navController.popBackStack()
+                    },
+                    onArtikelDetailClick = { artikelId ->
+                        navController.navigate("${AppRoutes.ARTIKEL_DETAIL_ROUTE}/$artikelId")
+                    }
+                )
+            }
         }
 
         // 1. Rute untuk Detail Artikel
@@ -110,14 +121,19 @@ fun AppNavigation() {
         // == Rute Sistem Pakar ==
 
         composable(route = AppRoutes.SISTEM_PAKAR_SCREEN) {
-            SistemPakarScreen(
-                // "Mulai Pengecekan" akan diarahkan ke GejalaScreen
-                onMulaiClick = { navController.navigate(AppRoutes.INFO_SCREEN) },
-                onBackClick = { navController.popBackStack() }
-
-                // onKondisiClick dan onInfoClick dihapus dari sini
-                // karena tidak ada tombolnya di UI SistemPakarScreen
-            )
+            Scaffold(
+                bottomBar = { BottomNavBar(navController) }
+            ) { paddingValues ->
+                SistemPakarScreen(
+                    modifier = Modifier.padding(paddingValues),
+                    onMulaiClick = {
+                        navController.navigate(AppRoutes.INFO_SCREEN)
+                    },
+                    onBackClick = {
+                        navController.popBackStack()
+                    }
+                )
+            }
         }
 
         composable(route = AppRoutes.GEJALA_SCREEN) {

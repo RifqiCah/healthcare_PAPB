@@ -6,8 +6,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons // <-- TAMBAHKAN IMPORT
-import androidx.compose.material.icons.filled.ArrowBack // <-- TAMBAHKAN IMPORT
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -27,263 +27,248 @@ import com.example.healthcare.ui.theme.HealthcareTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SistemPakarScreen(
-    // UBAH INI: Sesuaikan parameter
+    modifier: Modifier = Modifier, // ✅ UBAH: Modifier dengan default value
     onMulaiClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Sistem Pakar") },
-                // UBAH INI: Tambahkan tombol kembali
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Kembali")
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(bottom = 16.dp)
-        ) {
-            item {
-                // ... (Header Image, tidak ada perubahan) ...
+    // ✅ HAPUS Scaffold dari sini karena sudah di AppNavigation
+    LazyColumn(
+        modifier = modifier // ✅ GUNAKAN modifier dari parameter
+            .fillMaxSize(),
+        contentPadding = PaddingValues(bottom = 16.dp)
+    ) {
+        item {
+            // Header Image
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .padding(16.dp)
+                    .clip(RoundedCornerShape(16.dp))
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.bg_pakar),
+                    contentDescription = "Header Sistem Pakar",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                        .padding(16.dp)
-                        .clip(RoundedCornerShape(16.dp))
+                        .matchParentSize()
+                        .background(Color.Black.copy(alpha = 0.4f))
+                )
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.Top,
+                    horizontalAlignment = Alignment.Start
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.bg_pakar),
-                        contentDescription = "Header Sistem Pakar",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
+                    Text(
+                        text = "SISTEM PAKAR",
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        ),
                     )
-                    Box(
-                        modifier = Modifier
-                            .matchParentSize()
-                            .background(Color.Black.copy(alpha = 0.4f))
+                    Text(
+                        text = "DIAGNOSA PENYAKIT",
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        ),
+                    )
+                }
+            }
+        }
+
+        item {
+            // Card Pengecekan Gejala
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Pengecekan Gejala Kesehatan",
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        textAlign = TextAlign.Center
                     )
 
-                    Column(
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    HorizontalDivider(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.Top,
-                        horizontalAlignment = Alignment.Start
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        thickness = 2.dp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+
+                    Text(
+                        text = "Dapatkan informasi awal tentang kondisi kesehatan\nAnda berdasarkan gejala yang dialami",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        item {
+            // Card Cara Menggunakan
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Cara Menggunakan Sistem Ini:",
+                        style = MaterialTheme.typography.titleMedium.copy(fontSize = 20.sp)
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    val steps = listOf(
+                        "Pastikan Anda telah daftar dan masuk ke sistem, jika belum Anda dapat mendaftar terlebih dahulu.",
+                        "Jika sudah, Anda dapat menekan tombol di sebelah untuk melanjutkan pengecekan.",
+                        "Masukkan informasi Anda yang telah diminta oleh sistem.",
+                        "Masukkan gejala-gejala yang Anda alami.",
+                        "Sistem lalu menampilkan kondisi-kondisi yang mungkin terjadi pada Anda."
+                    )
+
+                    steps.forEachIndexed { index, step ->
+                        Text(
+                            text = "${index + 1}. $step",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 16.sp),
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Button(
+                        onClick = onMulaiClick,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp)
                     ) {
-                        Text(
-                            text = "SISTEM PAKAR",
-                            style = MaterialTheme.typography.headlineSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            ),
-                        )
-                        Text(
-                            text = "DIAGNOSA PENYAKIT",
-                            style = MaterialTheme.typography.headlineSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            ),
-                        )
+                        Text("Mulai Pengecekan")
                     }
                 }
             }
+        }
 
-            item {
-                // ... (Card Pengecekan Gejala, tidak ada perubahan) ...
-                Card(
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        item {
+            // Card Riwayat Pengecekan
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
+                )
+            ) {
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                        .padding(16.dp)
                 ) {
-                    Column(
+                    // Header
+                    Text(
+                        text = "Riwayat Pengecekan",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Divider tipis
+                    HorizontalDivider(
+                        thickness = 1.dp,
+                        color = Color(0xFFE0E0E0)
+                    )
+
+                    // Table Header
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                            .padding(vertical = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "Pengecekan Gejala Kesehatan",
-                            style = MaterialTheme.typography.headlineMedium.copy(
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.Bold
+                            text = "Tanggal",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 14.sp
                             ),
+                            modifier = Modifier.weight(1f),
                             textAlign = TextAlign.Center
                         )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        HorizontalDivider(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp),
-                            thickness = 2.dp,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-
                         Text(
-                            text = "Dapatkan informasi awal tentang kondisi kesehatan\nAnda berdasarkan gejala yang dialami",
-                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
-                            textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.primary
+                            text = "Waktu",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 14.sp
+                            ),
+                            modifier = Modifier.weight(1f),
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            text = "Detail",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 14.sp
+                            ),
+                            modifier = Modifier.weight(1f),
+                            textAlign = TextAlign.Center
                         )
                     }
-                }
-            }
 
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-
-            item {
-                // ... (Card Cara Menggunakan) ...
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "Cara Menggunakan Sistem Ini:",
-                            style = MaterialTheme.typography.titleMedium.copy(fontSize = 20.sp)
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        val steps = listOf(
-                            "Pastikan Anda telah daftar dan masuk ke sistem, jika belum Anda dapat mendaftar terlebih dahulu.",
-                            "Jika sudah, Anda dapat menekan tombol di sebelah untuk melanjutkan pengecekan.",
-                            "Masukkan informasi Anda yang telah diminta oleh sistem.",
-                            "Masukkan gejala-gejala yang Anda alami.",
-                            "Sistem lalu menampilkan kondisi-kondisi yang mungkin terjadi pada Anda."
-                        )
-
-                        steps.forEachIndexed { index, step ->
-                            Text(
-                                text = "${index + 1}. $step",
-                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 16.sp),
-                                modifier = Modifier.padding(vertical = 4.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        Button(
-                            // UBAH INI: Gunakan onMulaiClick
-                            onClick = onMulaiClick,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 8.dp)
-                        ) {
-                            Text("Mulai Pengecekan")
-                        }
-                    }
-                }
-            }
-
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-
-            item {
-                // ... (Card Riwayat Pengecekan, tidak ada perubahan) ...
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.White
+                    HorizontalDivider(
+                        thickness = 1.dp,
+                        color = Color(0xFFE0E0E0)
                     )
-                ) {
-                    Column(
+
+                    // Empty State
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp)
+                            .padding(vertical = 32.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        // Header
                         Text(
-                            text = "Riwayat Pengecekan",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.primary
+                            text = "Belum ada riwayat pemeriksaan.",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontSize = 14.sp,
+                                color = Color.Gray
                             )
                         )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // Divider tipis
-                        HorizontalDivider(
-                            thickness = 1.dp,
-                            color = Color(0xFFE0E0E0)
-                        )
-
-                        // Table Header
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = "Tanggal",
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 14.sp
-                                ),
-                                modifier = Modifier.weight(1f),
-                                textAlign = TextAlign.Center
-                            )
-                            Text(
-                                text = "Waktu",
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 14.sp
-                                ),
-                                modifier = Modifier.weight(1f),
-                                textAlign = TextAlign.Center
-                            )
-                            Text(
-                                text = "Detail",
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 14.sp
-                                ),
-                                modifier = Modifier.weight(1f),
-                                textAlign = TextAlign.Center
-                            )
-                        }
-
-                        HorizontalDivider(
-                            thickness = 1.dp,
-                            color = Color(0xFFE0E0E0)
-                        )
-
-                        // Empty State
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 32.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "Belum ada riwayat pemeriksaan.",
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontSize = 14.sp,
-                                    color = Color.Gray
-                                )
-                            )
-                        }
                     }
                 }
             }
@@ -291,11 +276,13 @@ fun SistemPakarScreen(
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun PreviewSistemPakarScreen() {
     HealthcareTheme {
-        // UBAH INI: Beri lambda kosong untuk preview
-        SistemPakarScreen(onMulaiClick = {}, onBackClick = {})
+        SistemPakarScreen(
+            onMulaiClick = {},
+            onBackClick = {}
+        )
     }
 }
