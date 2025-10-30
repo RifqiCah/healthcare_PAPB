@@ -31,12 +31,12 @@ fun InfoScreen(
             .padding(16.dp)
     ) {
         // Panggil fungsi-fungsi UI Anda
-        // HeaderSection()
-        // Spacer(Modifier.height(16.dp))
-        // HeroSection()
-        // Spacer(Modifier.height(24.dp))
-        // StepperSection(activeStep = 1)
-        // Spacer(Modifier.height(32.dp))
+         HeaderSection()
+         Spacer(Modifier.height(16.dp))
+         HeroSection()
+         Spacer(Modifier.height(24.dp))
+         StepperSection(activeStep = 1)
+         Spacer(Modifier.height(32.dp))
 
         // Konten Info
         Text("Umur", fontWeight = FontWeight.SemiBold)

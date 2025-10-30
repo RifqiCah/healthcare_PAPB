@@ -31,12 +31,12 @@ fun GejalaScreen(
             .padding(16.dp)
     ) {
         // Panggil fungsi-fungsi UI Anda
-        // HeaderSection()
-        // Spacer(Modifier.height(16.dp))
-        // HeroSection()
-        // Spacer(Modifier.height(24.dp))
-        // StepperSection(activeStep = 2)
-        // Spacer(Modifier.height(32.dp))
+         HeaderSection()
+         Spacer(Modifier.height(16.dp))
+         HeroSection()
+         Spacer(Modifier.height(24.dp))
+         StepperSection(activeStep = 2)
+         Spacer(Modifier.height(32.dp))
 
         // Konten Gejala
         Text("Apa yang Anda alami?", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
