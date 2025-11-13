@@ -3,27 +3,32 @@ package com.example.healthcare.ui.screens.register
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.healthcare.ui.theme.HealthcareTheme
-
-// Hapus import NavController, sudah tidak perlu
-// import androidx.navigation.NavController
 
 @Composable
 fun RegisterScreen(
-    // UBAH INI: Ganti NavController dengan lambda
     onRegisterSuccess: () -> Unit,
     onBackClick: () -> Unit
 ) {
@@ -31,141 +36,345 @@ fun RegisterScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
+    var agreeToTerms by remember { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFE9EDF5)),
-        contentAlignment = Alignment.Center
-    ) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .padding(16.dp),
-            elevation = CardDefaults.cardElevation(6.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "Registrasi",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 16.dp)
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF2E6BA8),
+                        Color(0xFF418ACE),
+                        Color(0xFFE3F2FD)
+                    )
                 )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
+            )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            // Logo/Icon Section
+            Card(
+                modifier = Modifier
+                    .size(100.dp)
+                    .padding(bottom = 24.dp),
+                shape = RoundedCornerShape(50.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(8.dp)
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(text = "Sudah memiliki akun?")
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(
+                        Icons.Default.Person,
+                        contentDescription = "Logo",
+                        tint = Color(0xFF418ACE),
+                        modifier = Modifier.size(50.dp)
+                    )
+                }
+            }
 
-                    // UBAH INI: Panggil lambda onBackClick
-                    TextButton(onClick = onBackClick) {
-                        Text("Login Sekarang", color = MaterialTheme.colorScheme.primary)
+            // Welcome Text
+            Text(
+                text = "HEALTH CARE",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                letterSpacing = 2.sp
+            )
+
+            Text(
+                text = "Bergabunglah Bersama Kami!",
+                fontSize = 16.sp,
+                color = Color.White.copy(alpha = 0.9f),
+                modifier = Modifier.padding(top = 8.dp, bottom = 32.dp)
+            )
+
+            // Register Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                elevation = CardDefaults.cardElevation(8.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Daftar Akun",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF418ACE),
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+
+                    Row(
+                        modifier = Modifier.padding(bottom = 24.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Sudah memiliki akun?",
+                            fontSize = 14.sp,
+                            color = Color.Gray
+                        )
+                        TextButton(
+                            onClick = onBackClick,
+                            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
+                        ) {
+                            Text(
+                                text = "Login Sekarang",
+                                color = Color(0xFF418ACE),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+
+                    // Google Sign Up Button
+                    OutlinedButton(
+                        onClick = { /* TODO: Google Sign-In */ },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = Color.White
+                        )
+                    ) {
+                        Text(
+                            text = "🔍 Daftar dengan Google",
+                            color = Color.Black,
+                            fontSize = 15.sp
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 20.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Divider(modifier = Modifier.weight(1f))
+                        Text(
+                            text = "atau",
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            color = Color.Gray,
+                            fontSize = 14.sp
+                        )
+                        Divider(modifier = Modifier.weight(1f))
+                    }
+
+                    // Username Field
+                    OutlinedTextField(
+                        value = username,
+                        onValueChange = { username = it },
+                        label = { Text("Username") },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.Person,
+                                contentDescription = null,
+                                tint = Color(0xFF418ACE)
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF418ACE),
+                            unfocusedBorderColor = Color.LightGray
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Email Field
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = { email = it },
+                        label = { Text("Email") },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.Email,
+                                contentDescription = null,
+                                tint = Color(0xFF418ACE)
+                            )
+                        },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF418ACE),
+                            unfocusedBorderColor = Color.LightGray
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Password Field
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = { password = it },
+                        label = { Text("Password") },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.Lock,
+                                contentDescription = null,
+                                tint = Color(0xFF418ACE)
+                            )
+                        },
+                        trailingIcon = {
+                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                Icon(
+                                    imageVector = if (passwordVisible)
+                                        Icons.Default.Visibility
+                                    else
+                                        Icons.Default.VisibilityOff,
+                                    contentDescription = if (passwordVisible)
+                                        "Hide password"
+                                    else
+                                        "Show password",
+                                    tint = Color.Gray
+                                )
+                            }
+                        },
+                        visualTransformation = if (passwordVisible)
+                            VisualTransformation.None
+                        else
+                            PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF418ACE),
+                            unfocusedBorderColor = Color.LightGray
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Confirm Password Field
+                    OutlinedTextField(
+                        value = confirmPassword,
+                        onValueChange = { confirmPassword = it },
+                        label = { Text("Konfirmasi Password") },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.Lock,
+                                contentDescription = null,
+                                tint = Color(0xFF418ACE)
+                            )
+                        },
+                        trailingIcon = {
+                            IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                                Icon(
+                                    imageVector = if (confirmPasswordVisible)
+                                        Icons.Default.Visibility
+                                    else
+                                        Icons.Default.VisibilityOff,
+                                    contentDescription = if (confirmPasswordVisible)
+                                        "Hide password"
+                                    else
+                                        "Show password",
+                                    tint = Color.Gray
+                                )
+                            }
+                        },
+                        visualTransformation = if (confirmPasswordVisible)
+                            VisualTransformation.None
+                        else
+                            PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF418ACE),
+                            unfocusedBorderColor = Color.LightGray
+                        ),
+                        isError = confirmPassword.isNotEmpty() && password != confirmPassword
+                    )
+
+                    if (confirmPassword.isNotEmpty() && password != confirmPassword) {
+                        Text(
+                            text = "⚠️ Password tidak cocok",
+                            color = MaterialTheme.colorScheme.error,
+                            fontSize = 12.sp,
+                            modifier = Modifier
+                                .align(Alignment.Start)
+                                .padding(start = 16.dp, top = 4.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Terms and Conditions
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = agreeToTerms,
+                            onCheckedChange = { agreeToTerms = it },
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = Color(0xFF418ACE)
+                            )
+                        )
+                        Text(
+                            text = "Saya menyetujui syarat dan ketentuan serta kebijakan privasi",
+                            fontSize = 12.sp,
+                            color = Color.DarkGray,
+                            lineHeight = 16.sp,
+                            modifier = Modifier.padding(start = 4.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Register Button
+                    Button(
+                        onClick = onRegisterSuccess,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF418ACE)
+                        ),
+                        elevation = ButtonDefaults.buttonElevation(4.dp),
+                        enabled = agreeToTerms &&
+                                username.isNotEmpty() &&
+                                email.isNotEmpty() &&
+                                password.isNotEmpty() &&
+                                password == confirmPassword
+                    ) {
+                        Text(
+                            text = "Daftar",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
-
-                // Tombol Google (placeholder)
-                Button(
-                    onClick = { /* TODO: Google Sign-Up */ },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF5F5F5))
-                ) {
-                    Text("Lanjutkan dengan Google", color = Color.Black)
-                }
-
-                Divider(
-                    modifier = Modifier.padding(vertical = 12.dp),
-                    color = Color.Gray,
-                    thickness = 1.dp
-                )
-
-                // Username
-                OutlinedTextField(
-                    value = username,
-                    onValueChange = { username = it },
-                    label = { Text("Username") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Email
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    label = { Text("Email") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Password
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    label = { Text("Password") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = confirmPassword,
-                    onValueChange = { confirmPassword = it },
-                    label = { Text("Konfirmasi Password") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Button(
-                    onClick = {
-                        // TODO: Validasi data registrasi di sini
-
-                        // UBAH INI: Panggil lambda onRegisterSuccess
-                        onRegisterSuccess()
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Daftar")
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text(
-                    text = "Dengan mendaftar, kamu menyetujui syarat dan ketentuan.",
-                    fontSize = 12.sp,
-                    color = Color.Gray,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                )
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Footer
+            Text(
+                text = "© 2025 Healthcare. All rights reserved.",
+                fontSize = 12.sp,
+                color = Color.White.copy(alpha = 0.7f),
+                textAlign = TextAlign.Center
+            )
         }
-    }
-}
-
-@Preview(showSystemUi = true, showBackground = true)
-@Composable
-fun PreviewRegisterScreen() {
-    HealthcareTheme {
-        RegisterScreen(
-            onRegisterSuccess = {
-                // Aksi ketika register berhasil (dummy untuk preview)
-            },
-            onBackClick = {
-                // Aksi ketika klik back/login (dummy untuk preview)
-            }
-        )
     }
 }
