@@ -9,10 +9,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.healthcare.ui.components.BottomNavBar
+import com.example.healthcare.ui.components.FloatingBottomNavBar
 
 // --- Import semua Screen Anda di sini ---
-// Pastikan path-nya sesuai dengan struktur folder Anda
 import com.example.healthcare.ui.screens.home.HomeScreen
 import com.example.healthcare.ui.screens.login.LoginScreen
 import com.example.healthcare.ui.screens.register.RegisterScreen
@@ -23,27 +22,23 @@ import com.example.healthcare.ui.screens.sistempakar.KondisiScreen
 import com.example.healthcare.ui.screens.sistempakar.DetailScreen
 import com.example.healthcare.ui.screens.sistempakar.InfoScreen
 import com.example.healthcare.ui.screens.artikel.ReadArtikelScreen
+import com.example.healthcare.ui.profile.ProfileScreen
+
 
 @Composable
 fun AppNavigation() {
-    // 1. Membuat NavController: Ini adalah "otak" yang mengelola navigasi
     val navController = rememberNavController()
 
-    // 2. Membuat NavHost: Ini adalah "wadah" yang akan menampilkan screen
     NavHost(
         navController = navController,
-        // Tentukan layar pertama yang muncul saat aplikasi dibuka
         startDestination = AppRoutes.LOGIN_SCREEN
     ) {
-        // 3. Daftarkan semua screen Anda di sini
-
         // == Rute Otentikasi ==
 
         composable(route = AppRoutes.LOGIN_SCREEN) {
             LoginScreen(
                 onLoginSuccess = {
                     navController.navigate(AppRoutes.HOME_SCREEN) {
-                        // Hapus "login" dari tumpukan (back stack)
                         popUpTo(AppRoutes.LOGIN_SCREEN) {
                             inclusive = true
                         }
@@ -58,10 +53,10 @@ fun AppNavigation() {
         composable(route = AppRoutes.REGISTER_SCREEN) {
             RegisterScreen(
                 onRegisterSuccess = {
-                    navController.popBackStack() // Kembali ke login
+                    navController.popBackStack()
                 },
                 onBackClick = {
-                    navController.popBackStack() // Kembali ke layar sebelumnya
+                    navController.popBackStack()
                 }
             )
         }
@@ -70,7 +65,7 @@ fun AppNavigation() {
 
         composable(route = AppRoutes.HOME_SCREEN) {
             Scaffold(
-                bottomBar = { BottomNavBar(navController) }
+                bottomBar = { FloatingBottomNavBar(navController) }
             ) { paddingValues ->
                 HomeScreen(
                     modifier = Modifier.padding(paddingValues),
@@ -86,7 +81,7 @@ fun AppNavigation() {
 
         composable(route = AppRoutes.ARTIKEL_SCREEN) {
             Scaffold(
-                bottomBar = { BottomNavBar(navController) }
+                bottomBar = { FloatingBottomNavBar(navController) }
             ) { paddingValues ->
                 ArtikelScreen(
                     modifier = Modifier.padding(paddingValues),
@@ -100,16 +95,14 @@ fun AppNavigation() {
             }
         }
 
-        // 1. Rute untuk Detail Artikel
         composable(
-            route = AppRoutes.ARTIKEL_DETAIL_SCREEN, // "artikel_detail/{artikelId}"
+            route = AppRoutes.ARTIKEL_DETAIL_SCREEN,
             arguments = listOf(navArgument(AppRoutes.ARTIKEL_DETAIL_ARG_ID) {
                 type = NavType.StringType
             })
         ) { backStackEntry ->
             val artikelId = backStackEntry.arguments?.getString(AppRoutes.ARTIKEL_DETAIL_ARG_ID)
 
-            // Panggil ReadArtikelScreen
             ReadArtikelScreen(
                 itemId = artikelId,
                 onBackClick = {
@@ -122,7 +115,7 @@ fun AppNavigation() {
 
         composable(route = AppRoutes.SISTEM_PAKAR_SCREEN) {
             Scaffold(
-                bottomBar = { BottomNavBar(navController) }
+                bottomBar = { FloatingBottomNavBar(navController) }
             ) { paddingValues ->
                 SistemPakarScreen(
                     modifier = Modifier.padding(paddingValues),
@@ -142,7 +135,6 @@ fun AppNavigation() {
                     navController.popBackStack()
                 },
                 onLanjutClick = {
-                    // "Lanjut" akan menavigasi ke KondisiScreen
                     navController.navigate(AppRoutes.KONDISI_SCREEN)
                 }
             )
@@ -154,10 +146,7 @@ fun AppNavigation() {
                     navController.popBackStack()
                 },
                 onLanjutClick = {
-                    // "Lanjut" akan menavigasi ke layar hasil/detail
-                    // Kita akan kirim ID hasil diagnosa (sebagai placeholder)
-                    val hasilId = "HasilDiagnosa_001" // Nanti ini didapat dari ViewModel
-
+                    val hasilId = "HasilDiagnosa_001"
                     navController.navigate("${AppRoutes.PAKAR_DETAIL_ROUTE}/$hasilId")
                 }
             )
@@ -168,44 +157,50 @@ fun AppNavigation() {
                 onBackClick = {
                     navController.popBackStack()
                 },
-                // TAMBAHKAN INI: Tentukan aksi "Lanjut"
                 onLanjutClick = {
-                    // "Lanjut" dari InfoScreen (Step 1) pergi ke GejalaScreen (Step 2)
                     navController.navigate(AppRoutes.GEJALA_SCREEN)
                 }
             )
         }
 
-        // == Rute Detail (Dengan Argumen) ==
-
         composable(
-            route = AppRoutes.PAKAR_DETAIL_SCREEN, // "pakar_detail/{pakarId}"
+            route = AppRoutes.PAKAR_DETAIL_SCREEN,
             arguments = listOf(navArgument(AppRoutes.PAKAR_DETAIL_ARG_ID) {
                 type = NavType.StringType
             })
         ) { backStackEntry ->
             val pakarId = backStackEntry.arguments?.getString(AppRoutes.PAKAR_DETAIL_ARG_ID)
 
-            // UBAH INI: Sesuaikan pemanggilannya
             DetailScreen(
                 itemId = pakarId,
                 onBackClick = {
                     navController.popBackStack()
                 },
-                // TAMBAHKAN INI: Tentukan aksi untuk "Selesai"
                 onSelesaiClick = {
-                    // Kembali ke layar utama Sistem Pakar
                     navController.popBackStack(
                         route = AppRoutes.SISTEM_PAKAR_SCREEN,
-                        inclusive = false // false = jangan tutup SistemPakarScreen
+                        inclusive = false
                     )
-
-                    // Alternatif: Kembali ke Home
-                    // navController.navigate(AppRoutes.HOME_SCREEN) {
-                    //    popUpTo(AppRoutes.HOME_SCREEN) { inclusive = true }
-                    // }
                 }
             )
+        }
+
+        composable(route = AppRoutes.PROFILE_SCREEN) {
+            Scaffold(
+                bottomBar = { FloatingBottomNavBar(navController) }
+            ) { paddingValues ->
+                ProfileScreen(
+                    modifier = Modifier.padding(paddingValues),
+                    navController = navController,
+                    onLogoutClick = {
+                        navController.navigate(AppRoutes.LOGIN_SCREEN) {
+                            popUpTo(AppRoutes.HOME_SCREEN) {
+                                inclusive = true
+                            }
+                        }
+                    }
+                )
+            }
         }
     }
 }
