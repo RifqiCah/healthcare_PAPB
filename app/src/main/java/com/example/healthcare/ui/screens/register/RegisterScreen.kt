@@ -1,4 +1,3 @@
-// Di dalam file /ui/screens/register/RegisterScreen.kt
 package com.example.healthcare.ui.screens.register
 
 import androidx.compose.foundation.background
@@ -26,20 +25,26 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.healthcare.viewmodel.AuthViewModel
+import com.example.healthcare.viewmodel.AuthState
 
 @Composable
 fun RegisterScreen(
     onRegisterSuccess: () -> Unit,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    viewModel: AuthViewModel = viewModel()
 ) {
-    var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
+    var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
     var agreeToTerms by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
+
+    val authState = viewModel.authState.collectAsState()
 
     Box(
         modifier = Modifier
@@ -59,10 +64,9 @@ fun RegisterScreen(
                 .fillMaxSize()
                 .verticalScroll(scrollState)
                 .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Logo/Icon Section
+            // Logo
             Card(
                 modifier = Modifier
                     .size(100.dp)
@@ -84,7 +88,7 @@ fun RegisterScreen(
                 }
             }
 
-            // Welcome Text
+            // Title
             Text(
                 text = "HEALTH CARE",
                 fontSize = 28.sp,
@@ -100,7 +104,7 @@ fun RegisterScreen(
                 modifier = Modifier.padding(top = 8.dp, bottom = 32.dp)
             )
 
-            // Register Card
+            // Card Form
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
@@ -121,7 +125,6 @@ fun RegisterScreen(
 
                     Row(
                         modifier = Modifier.padding(bottom = 24.dp),
-                        horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
@@ -129,10 +132,7 @@ fun RegisterScreen(
                             fontSize = 14.sp,
                             color = Color.Gray
                         )
-                        TextButton(
-                            onClick = onBackClick,
-                            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
-                        ) {
+                        TextButton(onClick = onBackClick) {
                             Text(
                                 text = "Login Sekarang",
                                 color = Color(0xFF418ACE),
@@ -142,41 +142,7 @@ fun RegisterScreen(
                         }
                     }
 
-                    // Google Sign Up Button
-                    OutlinedButton(
-                        onClick = { /* TODO: Google Sign-In */ },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = Color.White
-                        )
-                    ) {
-                        Text(
-                            text = "🔍 Daftar dengan Google",
-                            color = Color.Black,
-                            fontSize = 15.sp
-                        )
-                    }
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 20.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Divider(modifier = Modifier.weight(1f))
-                        Text(
-                            text = "atau",
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            color = Color.Gray,
-                            fontSize = 14.sp
-                        )
-                        Divider(modifier = Modifier.weight(1f))
-                    }
-
-                    // Username Field
+                    // Username
                     OutlinedTextField(
                         value = username,
                         onValueChange = { username = it },
@@ -189,16 +155,12 @@ fun RegisterScreen(
                             )
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF418ACE),
-                            unfocusedBorderColor = Color.LightGray
-                        )
+                        shape = RoundedCornerShape(12.dp)
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Email Field
+                    // Email
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
@@ -212,16 +174,12 @@ fun RegisterScreen(
                         },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF418ACE),
-                            unfocusedBorderColor = Color.LightGray
-                        )
+                        shape = RoundedCornerShape(12.dp)
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Password Field
+                    // Password
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it },
@@ -238,32 +196,22 @@ fun RegisterScreen(
                                 Icon(
                                     imageVector = if (passwordVisible)
                                         Icons.Default.Visibility
-                                    else
-                                        Icons.Default.VisibilityOff,
-                                    contentDescription = if (passwordVisible)
-                                        "Hide password"
-                                    else
-                                        "Show password",
+                                    else Icons.Default.VisibilityOff,
+                                    contentDescription = null,
                                     tint = Color.Gray
                                 )
                             }
                         },
                         visualTransformation = if (passwordVisible)
-                            VisualTransformation.None
-                        else
-                            PasswordVisualTransformation(),
+                            VisualTransformation.None else PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF418ACE),
-                            unfocusedBorderColor = Color.LightGray
-                        )
+                        shape = RoundedCornerShape(12.dp)
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Confirm Password Field
+                    // Confirm Password
                     OutlinedTextField(
                         value = confirmPassword,
                         onValueChange = { confirmPassword = it },
@@ -280,28 +228,18 @@ fun RegisterScreen(
                                 Icon(
                                     imageVector = if (confirmPasswordVisible)
                                         Icons.Default.Visibility
-                                    else
-                                        Icons.Default.VisibilityOff,
-                                    contentDescription = if (confirmPasswordVisible)
-                                        "Hide password"
-                                    else
-                                        "Show password",
+                                    else Icons.Default.VisibilityOff,
+                                    contentDescription = null,
                                     tint = Color.Gray
                                 )
                             }
                         },
                         visualTransformation = if (confirmPasswordVisible)
-                            VisualTransformation.None
-                        else
-                            PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                            VisualTransformation.None else PasswordVisualTransformation(),
+                        isError = confirmPassword.isNotEmpty() &&
+                                password != confirmPassword,
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF418ACE),
-                            unfocusedBorderColor = Color.LightGray
-                        ),
-                        isError = confirmPassword.isNotEmpty() && password != confirmPassword
+                        shape = RoundedCornerShape(12.dp)
                     )
 
                     if (confirmPassword.isNotEmpty() && password != confirmPassword) {
@@ -317,7 +255,7 @@ fun RegisterScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Terms and Conditions
+                    // Terms
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
@@ -330,10 +268,9 @@ fun RegisterScreen(
                             )
                         )
                         Text(
-                            text = "Saya menyetujui syarat dan ketentuan serta kebijakan privasi",
+                            text = "Saya menyetujui syarat dan ketentuan",
                             fontSize = 12.sp,
                             color = Color.DarkGray,
-                            lineHeight = 16.sp,
                             modifier = Modifier.padding(start = 4.dp)
                         )
                     }
@@ -342,20 +279,25 @@ fun RegisterScreen(
 
                     // Register Button
                     Button(
-                        onClick = onRegisterSuccess,
+                        onClick = {
+                            if (password != confirmPassword) {
+                                viewModel.setError("Password tidak cocok")
+                            } else {
+                                viewModel.register(email, password)
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp),
                         shape = RoundedCornerShape(12.dp),
+                        enabled = email.isNotEmpty()
+                                && username.isNotEmpty()
+                                && password.isNotEmpty()
+                                && password == confirmPassword
+                                && agreeToTerms,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF418ACE)
-                        ),
-                        elevation = ButtonDefaults.buttonElevation(4.dp),
-                        enabled = agreeToTerms &&
-                                username.isNotEmpty() &&
-                                email.isNotEmpty() &&
-                                password.isNotEmpty() &&
-                                password == confirmPassword
+                        )
                     ) {
                         Text(
                             text = "Daftar",
@@ -363,12 +305,23 @@ fun RegisterScreen(
                             fontWeight = FontWeight.Bold
                         )
                     }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // STATE
+                    when (val state = authState.value) {
+                        is AuthState.Loading -> CircularProgressIndicator()
+                        is AuthState.Error -> Text(state.message, color = Color.Red)
+                        is AuthState.Success -> {
+                            LaunchedEffect(Unit) { onRegisterSuccess() }
+                        }
+                        else -> {}
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Footer
             Text(
                 text = "© 2025 Healthcare. All rights reserved.",
                 fontSize = 12.sp,
@@ -378,3 +331,5 @@ fun RegisterScreen(
         }
     }
 }
+
+private fun AuthViewModel.setError(string: String) {}

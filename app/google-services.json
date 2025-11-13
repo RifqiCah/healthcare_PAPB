@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "590644392795",
+    "project_id": "healthcarepapb",
+    "storage_bucket": "healthcarepapb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:590644392795:android:14c9741af743e4fedf207e",
+        "android_client_info": {
+          "package_name": "com.example.healthcare"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD_17RtFFzOHVt_MWhuac_n_unm1UIQd4Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,4 +1,3 @@
-// Di dalam file /ui/screens/login/LoginScreen.kt
 package com.example.healthcare.ui.screens.login
 
 import androidx.compose.foundation.background
@@ -25,16 +24,22 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.healthcare.viewmodel.AuthState
+import com.example.healthcare.viewmodel.AuthViewModel
 
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
-    onRegisterClick: () -> Unit
+    onRegisterClick: () -> Unit,
+    viewModel: AuthViewModel = viewModel()
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var rememberMe by remember { mutableStateOf(false) }
+
+    val authState = viewModel.authState.collectAsState()
     val scrollState = rememberScrollState()
 
     Box(
@@ -55,10 +60,10 @@ fun LoginScreen(
                 .fillMaxSize()
                 .verticalScroll(scrollState)
                 .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Logo/Icon Section
+
+            // LOGO AREA
             Card(
                 modifier = Modifier
                     .size(100.dp)
@@ -80,7 +85,7 @@ fun LoginScreen(
                 }
             }
 
-            // Welcome Text
+            // TITLE
             Text(
                 text = "HEALTH CARE",
                 fontSize = 28.sp,
@@ -96,7 +101,7 @@ fun LoginScreen(
                 modifier = Modifier.padding(top = 8.dp, bottom = 32.dp)
             )
 
-            // Login Card
+            // LOGIN CARD
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
@@ -107,6 +112,7 @@ fun LoginScreen(
                     modifier = Modifier.padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+
                     Text(
                         text = "Masuk",
                         fontSize = 24.sp,
@@ -117,127 +123,61 @@ fun LoginScreen(
 
                     Row(
                         modifier = Modifier.padding(bottom = 24.dp),
-                        horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "Belum memiliki akun?",
-                            fontSize = 14.sp,
-                            color = Color.Gray
-                        )
-                        TextButton(
-                            onClick = onRegisterClick,
-                            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
-                        ) {
+                        Text("Belum memiliki akun?")
+                        TextButton(onClick = onRegisterClick) {
                             Text(
                                 text = "Daftar Sekarang",
                                 color = Color(0xFF418ACE),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp
+                                fontWeight = FontWeight.Bold
                             )
                         }
                     }
 
-                    // Google Sign In Button
-                    OutlinedButton(
-                        onClick = { /* TODO: Google Sign-In */ },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = Color.White
-                        )
-                    ) {
-                        Text(
-                            text = "🔍 Lanjutkan dengan Google",
-                            color = Color.Black,
-                            fontSize = 15.sp
-                        )
-                    }
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 20.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Divider(modifier = Modifier.weight(1f))
-                        Text(
-                            text = "atau",
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            color = Color.Gray,
-                            fontSize = 14.sp
-                        )
-                        Divider(modifier = Modifier.weight(1f))
-                    }
-
-                    // Email Field
+                    // EMAIL FIELD
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
-                        label = { Text("Username atau Email") },
+                        label = { Text("Email") },
                         leadingIcon = {
-                            Icon(
-                                Icons.Default.Email,
-                                contentDescription = null,
-                                tint = Color(0xFF418ACE)
-                            )
+                            Icon(Icons.Default.Email, contentDescription = null, tint = Color(0xFF418ACE))
                         },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF418ACE),
-                            unfocusedBorderColor = Color.LightGray
-                        )
+                        shape = RoundedCornerShape(12.dp)
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(Modifier.height(16.dp))
 
-                    // Password Field
+                    // PASSWORD FIELD
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it },
                         label = { Text("Password") },
                         leadingIcon = {
-                            Icon(
-                                Icons.Default.Lock,
-                                contentDescription = null,
-                                tint = Color(0xFF418ACE)
-                            )
+                            Icon(Icons.Default.Lock, contentDescription = null, tint = Color(0xFF418ACE))
                         },
                         trailingIcon = {
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
                                 Icon(
-                                    imageVector = if (passwordVisible)
-                                        Icons.Default.Visibility
-                                    else
-                                        Icons.Default.VisibilityOff,
-                                    contentDescription = if (passwordVisible)
-                                        "Hide password"
-                                    else
-                                        "Show password",
+                                    if (passwordVisible) Icons.Default.Visibility
+                                    else Icons.Default.VisibilityOff,
+                                    contentDescription = null,
                                     tint = Color.Gray
                                 )
                             }
                         },
                         visualTransformation = if (passwordVisible)
-                            VisualTransformation.None
-                        else
-                            PasswordVisualTransformation(),
+                            VisualTransformation.None else PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF418ACE),
-                            unfocusedBorderColor = Color.LightGray
-                        )
+                        shape = RoundedCornerShape(12.dp)
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(Modifier.height(12.dp))
 
-                    // Remember Me & Forgot Password
+                    // REMEMBER ME
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -247,52 +187,50 @@ fun LoginScreen(
                             Checkbox(
                                 checked = rememberMe,
                                 onCheckedChange = { rememberMe = it },
-                                colors = CheckboxDefaults.colors(
-                                    checkedColor = Color(0xFF418ACE)
-                                )
+                                colors = CheckboxDefaults.colors(checkedColor = Color(0xFF418ACE))
                             )
-                            Text(
-                                text = "Ingat Saya",
-                                fontSize = 14.sp,
-                                color = Color.DarkGray
-                            )
+                            Text("Ingat Saya", fontSize = 14.sp, color = Color.DarkGray)
                         }
-                        TextButton(onClick = { /* TODO: Forgot password */ }) {
+
+                        TextButton(onClick = { /* TODO forgot password */ }) {
                             Text(
                                 text = "Lupa Password?",
                                 color = Color(0xFF418ACE),
-                                fontSize = 14.sp,
                                 fontWeight = FontWeight.Medium
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(Modifier.height(24.dp))
 
-                    // Login Button
+                    // LOGIN BUTTON
                     Button(
-                        onClick = onLoginSuccess,
+                        onClick = { viewModel.login(email, password) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp),
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF418ACE)
-                        ),
-                        elevation = ButtonDefaults.buttonElevation(4.dp)
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF418ACE))
                     ) {
-                        Text(
-                            text = "Masuk",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Text("Masuk", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+
+                    // AUTH STATE
+                    when (val state = authState.value) {
+                        is AuthState.Loading -> CircularProgressIndicator()
+                        is AuthState.Error -> Text(state.message, color = Color.Red)
+                        is AuthState.Success -> {
+                            LaunchedEffect(Unit) { onLoginSuccess() }
+                        }
+                        else -> {}
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Footer
             Text(
                 text = "© 2025 Healthcare. All rights reserved.",
                 fontSize = 12.sp,
