@@ -17,11 +17,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.healthcare.ui.theme.HealthcareTheme
 
-// Hapus import NavController karena sudah tidak dipakai
+
 
 @Composable
 fun LoginScreen(
-    // UBAH INI: Terima lambda, bukan NavController
+
     onLoginSuccess: () -> Unit,
     onRegisterClick: () -> Unit
 ) {

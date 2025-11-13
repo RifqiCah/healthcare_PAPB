@@ -2,6 +2,10 @@
 package com.example.healthcare.ui.navigation
 
 object AppRoutes {
+    //Rute untuk profile
+    const val PROFILE_SCREEN = "profile"
+
+
     // Rute untuk otentikasi
     const val LOGIN_SCREEN = "login"
     const val REGISTER_SCREEN = "register"
