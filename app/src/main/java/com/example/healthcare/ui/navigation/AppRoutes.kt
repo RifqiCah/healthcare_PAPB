@@ -31,4 +31,7 @@ object AppRoutes {
     const val ARTIKEL_DETAIL_ARG_ID = "artikelId"
     // Rute lengkap: "artikel_detail/{artikelId}"
     const val ARTIKEL_DETAIL_SCREEN = "$ARTIKEL_DETAIL_ROUTE/{$ARTIKEL_DETAIL_ARG_ID}"
+
+    const val FORGOT_PASSWORD_SCREEN = "forgot_password"
+
 }

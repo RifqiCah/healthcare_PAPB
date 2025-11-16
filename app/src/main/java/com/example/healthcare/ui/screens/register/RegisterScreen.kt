@@ -1,5 +1,6 @@
 package com.example.healthcare.ui.screens.register
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -18,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -26,8 +28,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.healthcare.R
 import com.example.healthcare.viewmodel.AuthViewModel
 import com.example.healthcare.viewmodel.AuthState
+
 
 @Composable
 fun RegisterScreen(
@@ -52,9 +56,9 @@ fun RegisterScreen(
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF2E6BA8),
-                        Color(0xFF418ACE),
-                        Color(0xFFE3F2FD)
+                        Color(0xFF5B7BA4),
+                        Color(0xFF6B8BB4),
+                        Color(0xFFD8E0EB)
                     )
                 )
             )
@@ -66,7 +70,7 @@ fun RegisterScreen(
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Logo
+// LOGO AREA
             Card(
                 modifier = Modifier
                     .size(100.dp)
@@ -79,11 +83,10 @@ fun RegisterScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        Icons.Default.Person,
-                        contentDescription = "Logo",
-                        tint = Color(0xFF418ACE),
-                        modifier = Modifier.size(50.dp)
+                    Image(
+                        painter = painterResource(id = R.drawable.logo_removebg_preview),
+                        contentDescription = "Healthcare Logo",
+                        modifier = Modifier.size(80.dp)
                     )
                 }
             }

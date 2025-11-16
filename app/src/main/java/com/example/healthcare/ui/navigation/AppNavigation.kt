@@ -23,6 +23,7 @@ import com.example.healthcare.ui.screens.sistempakar.DetailScreen
 import com.example.healthcare.ui.screens.sistempakar.InfoScreen
 import com.example.healthcare.ui.screens.artikel.ReadArtikelScreen
 import com.example.healthcare.ui.profile.ProfileScreen
+import com.example.healthcare.ui.screens.ForgotPassword.ForgotPasswordScreen
 
 
 @Composable
@@ -34,7 +35,6 @@ fun AppNavigation() {
         startDestination = AppRoutes.LOGIN_SCREEN
     ) {
         // == Rute Otentikasi ==
-
         composable(route = AppRoutes.LOGIN_SCREEN) {
             LoginScreen(
                 onLoginSuccess = {
@@ -46,9 +46,13 @@ fun AppNavigation() {
                 },
                 onRegisterClick = {
                     navController.navigate(AppRoutes.REGISTER_SCREEN)
+                },
+                onForgotPasswordClick = {
+                    navController.navigate(AppRoutes.FORGOT_PASSWORD_SCREEN)
                 }
             )
         }
+
 
         composable(route = AppRoutes.REGISTER_SCREEN) {
             RegisterScreen(
@@ -198,9 +202,19 @@ fun AppNavigation() {
                                 inclusive = true
                             }
                         }
+
                     }
                 )
             }
         }
+        // == Forgot Password ==
+        composable(route = AppRoutes.FORGOT_PASSWORD_SCREEN) {
+            ForgotPasswordScreen(
+                onBackClick = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
     }
 }
