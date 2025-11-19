@@ -17,6 +17,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "NEWS_API_KEY", "\"7049ab40f8bb467b9ca0655a478aaeba\"")
     }
 
     buildTypes {
@@ -37,6 +39,8 @@ android {
     }
     buildFeatures {
         compose = true
+        // BARIS TAMBAHAN: Mengaktifkan fitur BuildConfig.
+        buildConfig = true
     }
 }
 
@@ -57,6 +61,20 @@ dependencies {
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-database-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
+
+    // Retrofit (HTTP client)
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+
+    // GSON Converter (untuk Retrofit agar bisa mem-parsing JSON, memperbaiki error 'Unresolved reference 'gson'' sebelumnya)
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+
+    // OkHttp & Logging Interceptor (Sangat disarankan untuk debugging API request/response)
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+    // Coroutines (untuk operasi jaringan asinkron)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
