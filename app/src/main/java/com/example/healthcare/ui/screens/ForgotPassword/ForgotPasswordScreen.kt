@@ -1,6 +1,5 @@
 package com.example.healthcare.ui.screens.ForgotPassword
 
-
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -11,7 +10,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,30 +20,24 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.healthcare.R
-
-@Preview(showBackground = true)
-@Composable
-fun ForgotPasswordScreenPreview() {
-    ForgotPasswordScreen(
-        onBackClick = {},
-        onResetSuccess = {}
-    )
-}
+import com.example.healthcare.viewmodel.AuthState
+import com.example.healthcare.viewmodel.AuthViewModel
 
 @Composable
 fun ForgotPasswordScreen(
     onBackClick: () -> Unit = {},
-    onResetSuccess: () -> Unit = {}
-)
-
-{
+    onResetSuccess: () -> Unit = {},
+    viewModel: AuthViewModel = viewModel()
+) {
     var email by remember { mutableStateOf("") }
     var isEmailSent by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
+
+    val authState = viewModel.authState.collectAsState()
 
     Box(
         modifier = Modifier
@@ -83,8 +75,8 @@ fun ForgotPasswordScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Logo/Icon Section
-// LOGO AREA
+
+            // LOGO AREA
             Card(
                 modifier = Modifier
                     .size(100.dp)
@@ -105,7 +97,6 @@ fun ForgotPasswordScreen(
                 }
             }
 
-            // Title Text
             Text(
                 text = "LUPA PASSWORD?",
                 fontSize = 28.sp,
@@ -115,16 +106,13 @@ fun ForgotPasswordScreen(
             )
 
             Text(
-                text = if (isEmailSent)
-                    "Cek Email Anda!"
-                else
-                    "Jangan Khawatir!",
+                text = if (isEmailSent) "Cek Email Anda!" else "Jangan Khawatir!",
                 fontSize = 16.sp,
                 color = Color.White.copy(alpha = 0.9f),
                 modifier = Modifier.padding(top = 8.dp, bottom = 32.dp)
             )
 
-            // Main Card
+            // ================= CARD =================
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
@@ -135,8 +123,33 @@ fun ForgotPasswordScreen(
                     modifier = Modifier.padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+
+                    // ================= EVEL STATE =================
+                    when (val state = authState.value) {
+
+                        is AuthState.Loading -> {
+                            CircularProgressIndicator()
+                            return@Column
+                        }
+
+                        is AuthState.Error -> {
+                            Text(
+                                text = state.message,
+                                color = Color.Red,
+                                fontSize = 14.sp,
+                                modifier = Modifier.padding(bottom = 12.dp)
+                            )
+                        }
+
+                        is AuthState.Success -> {
+                            isEmailSent = true
+                        }
+
+                        else -> {}
+                    }
+
+                    // ================= BEFORE EMAIL SENT =================
                     if (!isEmailSent) {
-                        // Before Email Sent
                         Text(
                             text = "Reset Password",
                             fontSize = 24.sp,
@@ -146,7 +159,7 @@ fun ForgotPasswordScreen(
                         )
 
                         Text(
-                            text = "Masukkan email Anda dan kami akan mengirimkan link untuk reset password",
+                            text = "Masukkan email Anda dan kami akan mengirim link reset password.",
                             fontSize = 14.sp,
                             color = Color.Gray,
                             textAlign = TextAlign.Center,
@@ -154,36 +167,24 @@ fun ForgotPasswordScreen(
                             modifier = Modifier.padding(bottom = 24.dp)
                         )
 
-                        // Email Field
                         OutlinedTextField(
                             value = email,
                             onValueChange = { email = it },
                             label = { Text("Email") },
                             leadingIcon = {
-                                Icon(
-                                    Icons.Default.Email,
-                                    contentDescription = null,
-                                    tint = Color(0xFF418ACE)
-                                )
+                                Icon(Icons.Default.Email, null, tint = Color(0xFF418ACE))
                             },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFF418ACE),
-                                unfocusedBorderColor = Color.LightGray
-                            ),
-                            singleLine = true
+                            shape = RoundedCornerShape(12.dp)
                         )
 
                         Spacer(modifier = Modifier.height(24.dp))
 
-                        // Send Button
                         Button(
                             onClick = {
-                                // TODO: Implement password reset logic
                                 if (email.isNotEmpty()) {
-                                    isEmailSent = true
+                                    viewModel.resetPassword(email)
                                 }
                             },
                             modifier = Modifier
@@ -193,7 +194,6 @@ fun ForgotPasswordScreen(
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = Color(0xFF418ACE)
                             ),
-                            elevation = ButtonDefaults.buttonElevation(4.dp),
                             enabled = email.isNotEmpty()
                         ) {
                             Text(
@@ -205,7 +205,6 @@ fun ForgotPasswordScreen(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Back to Login
                         Row(
                             horizontalArrangement = Arrangement.Center,
                             verticalAlignment = Alignment.CenterVertically
@@ -216,8 +215,7 @@ fun ForgotPasswordScreen(
                                 color = Color.Gray
                             )
                             TextButton(
-                                onClick = onBackClick,
-                                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
+                                onClick = onBackClick
                             ) {
                                 Text(
                                     text = "Login",
@@ -227,8 +225,9 @@ fun ForgotPasswordScreen(
                                 )
                             }
                         }
-                    } else {
-                        // After Email Sent - Success State
+                    }
+                    // ================= AFTER EMAIL SENT =================
+                    else {
                         Icon(
                             imageVector = Icons.Default.Email,
                             contentDescription = "Email Sent",
@@ -247,7 +246,7 @@ fun ForgotPasswordScreen(
                         )
 
                         Text(
-                            text = "Kami telah mengirimkan link reset password ke:",
+                            text = "Kami telah mengirim link reset password ke:",
                             fontSize = 14.sp,
                             color = Color.Gray,
                             textAlign = TextAlign.Center,
@@ -263,38 +262,9 @@ fun ForgotPasswordScreen(
                             modifier = Modifier.padding(bottom = 24.dp)
                         )
 
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 16.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = Color(0xFFE3F2FD)
-                            ),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp)
-                            ) {
-                                Text(
-                                    text = "📧 Langkah Selanjutnya:",
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF418ACE),
-                                    modifier = Modifier.padding(bottom = 8.dp)
-                                )
-                                Text(
-                                    text = "1. Buka email Anda\n2. Klik link reset password\n3. Buat password baru\n4. Login dengan password baru",
-                                    fontSize = 13.sp,
-                                    color = Color.DarkGray,
-                                    lineHeight = 20.sp
-                                )
-                            }
-                        }
-
-                        // Resend Button
                         OutlinedButton(
                             onClick = {
-                                // TODO: Resend email logic
+                                viewModel.resetPassword(email)
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -311,7 +281,6 @@ fun ForgotPasswordScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        // Back to Login Button
                         Button(
                             onClick = onResetSuccess,
                             modifier = Modifier
@@ -320,8 +289,7 @@ fun ForgotPasswordScreen(
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = Color(0xFF418ACE)
-                            ),
-                            elevation = ButtonDefaults.buttonElevation(4.dp)
+                            )
                         ) {
                             Text(
                                 text = "Kembali ke Login",
@@ -335,7 +303,6 @@ fun ForgotPasswordScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Footer
             Text(
                 text = "© 2025 Healthcare. All rights reserved.",
                 fontSize = 12.sp,

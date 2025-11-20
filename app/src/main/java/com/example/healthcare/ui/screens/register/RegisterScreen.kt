@@ -31,7 +31,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.healthcare.R
 import com.example.healthcare.viewmodel.AuthViewModel
 import com.example.healthcare.viewmodel.AuthState
-
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 
 @Composable
 fun RegisterScreen(
@@ -39,6 +41,7 @@ fun RegisterScreen(
     onBackClick: () -> Unit,
     viewModel: AuthViewModel = viewModel()
 ) {
+    // === State input user ===
     var email by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -46,9 +49,12 @@ fun RegisterScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
     var agreeToTerms by remember { mutableStateOf(false) }
-    val scrollState = rememberScrollState()
 
+    val scrollState = rememberScrollState()
     val authState = viewModel.authState.collectAsState()
+
+    // Kita pakai FirebaseAuth langsung di sini (tidak melalui viewModel.auth)
+    val auth = FirebaseAuth.getInstance()
 
     Box(
         modifier = Modifier
@@ -70,7 +76,8 @@ fun RegisterScreen(
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-// LOGO AREA
+
+            // LOGO
             Card(
                 modifier = Modifier
                     .size(100.dp)
@@ -79,10 +86,7 @@ fun RegisterScreen(
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 elevation = CardDefaults.cardElevation(8.dp)
             ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
+                Box(contentAlignment = Alignment.Center) {
                     Image(
                         painter = painterResource(id = R.drawable.logo_removebg_preview),
                         contentDescription = "Healthcare Logo",
@@ -91,7 +95,6 @@ fun RegisterScreen(
                 }
             }
 
-            // Title
             Text(
                 text = "HEALTH CARE",
                 fontSize = 28.sp,
@@ -107,7 +110,7 @@ fun RegisterScreen(
                 modifier = Modifier.padding(top = 8.dp, bottom = 32.dp)
             )
 
-            // Card Form
+            // === CARD FORM ===
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
@@ -118,6 +121,7 @@ fun RegisterScreen(
                     modifier = Modifier.padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+
                     Text(
                         text = "Daftar Akun",
                         fontSize = 24.sp,
@@ -127,25 +131,24 @@ fun RegisterScreen(
                     )
 
                     Row(
-                        modifier = Modifier.padding(bottom = 24.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(bottom = 24.dp)
                     ) {
                         Text(
                             text = "Sudah memiliki akun?",
-                            fontSize = 14.sp,
-                            color = Color.Gray
+                            color = Color.Gray,
+                            fontSize = 14.sp
                         )
                         TextButton(onClick = onBackClick) {
                             Text(
-                                text = "Login Sekarang",
+                                "Login Sekarang",
                                 color = Color(0xFF418ACE),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp
+                                fontWeight = FontWeight.Bold
                             )
                         }
                     }
 
-                    // Username
+                    // USERNAME
                     OutlinedTextField(
                         value = username,
                         onValueChange = { username = it },
@@ -161,9 +164,9 @@ fun RegisterScreen(
                         shape = RoundedCornerShape(12.dp)
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(Modifier.height(16.dp))
 
-                    // Email
+                    // EMAIL
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
@@ -180,9 +183,9 @@ fun RegisterScreen(
                         shape = RoundedCornerShape(12.dp)
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(Modifier.height(16.dp))
 
-                    // Password
+                    // PASSWORD
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it },
@@ -199,22 +202,25 @@ fun RegisterScreen(
                                 Icon(
                                     imageVector = if (passwordVisible)
                                         Icons.Default.Visibility
-                                    else Icons.Default.VisibilityOff,
+                                    else
+                                        Icons.Default.VisibilityOff,
                                     contentDescription = null,
                                     tint = Color.Gray
                                 )
                             }
                         },
                         visualTransformation = if (passwordVisible)
-                            VisualTransformation.None else PasswordVisualTransformation(),
+                            VisualTransformation.None
+                        else
+                            PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp)
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(Modifier.height(16.dp))
 
-                    // Confirm Password
+                    // CONFIRM PASSWORD
                     OutlinedTextField(
                         value = confirmPassword,
                         onValueChange = { confirmPassword = it },
@@ -231,37 +237,39 @@ fun RegisterScreen(
                                 Icon(
                                     imageVector = if (confirmPasswordVisible)
                                         Icons.Default.Visibility
-                                    else Icons.Default.VisibilityOff,
+                                    else
+                                        Icons.Default.VisibilityOff,
                                     contentDescription = null,
                                     tint = Color.Gray
                                 )
                             }
                         },
                         visualTransformation = if (confirmPasswordVisible)
-                            VisualTransformation.None else PasswordVisualTransformation(),
-                        isError = confirmPassword.isNotEmpty() &&
-                                password != confirmPassword,
+                            VisualTransformation.None
+                        else
+                            PasswordVisualTransformation(),
+                        isError = confirmPassword.isNotEmpty() && confirmPassword != password,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp)
                     )
 
-                    if (confirmPassword.isNotEmpty() && password != confirmPassword) {
+                    if (confirmPassword.isNotEmpty() && confirmPassword != password) {
                         Text(
                             text = "⚠️ Password tidak cocok",
                             color = MaterialTheme.colorScheme.error,
                             fontSize = 12.sp,
                             modifier = Modifier
                                 .align(Alignment.Start)
-                                .padding(start = 16.dp, top = 4.dp)
+                                .padding(start = 8.dp, top = 4.dp)
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(Modifier.height(12.dp))
 
-                    // Terms
+                    // TERMS
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Checkbox(
                             checked = agreeToTerms,
@@ -273,21 +281,17 @@ fun RegisterScreen(
                         Text(
                             text = "Saya menyetujui syarat dan ketentuan",
                             fontSize = 12.sp,
-                            color = Color.DarkGray,
-                            modifier = Modifier.padding(start = 4.dp)
+                            color = Color.DarkGray
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(Modifier.height(24.dp))
 
-                    // Register Button
+                    // REGISTER BUTTON
                     Button(
                         onClick = {
-                            if (password != confirmPassword) {
-                                viewModel.setError("Password tidak cocok")
-                            } else {
-                                viewModel.register(email, password)
-                            }
+                            if (password != confirmPassword) return@Button
+                            viewModel.register(email, password)
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -296,7 +300,7 @@ fun RegisterScreen(
                         enabled = email.isNotEmpty()
                                 && username.isNotEmpty()
                                 && password.isNotEmpty()
-                                && password == confirmPassword
+                                && confirmPassword == password
                                 && agreeToTerms,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF418ACE)
@@ -309,21 +313,49 @@ fun RegisterScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(Modifier.height(16.dp))
 
-                    // STATE
+                    // === AUTH STATE ===
                     when (val state = authState.value) {
-                        is AuthState.Loading -> CircularProgressIndicator()
-                        is AuthState.Error -> Text(state.message, color = Color.Red)
-                        is AuthState.Success -> {
-                            LaunchedEffect(Unit) { onRegisterSuccess() }
+
+                        is AuthState.Loading -> {
+                            CircularProgressIndicator()
                         }
+
+                        is AuthState.Error -> {
+                            Text(
+                                text = state.message,
+                                color = Color.Red,
+                                fontSize = 14.sp,
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
+                        }
+
+                        is AuthState.Success -> {
+                            // DI SINI: tulis ke Firestore SEKALI & navigate
+                            LaunchedEffect(key1 = "register_success") {
+                                val uid = auth.currentUser?.uid
+                                if (uid != null) {
+                                    Firebase.firestore.collection("users")
+                                        .document(uid)
+                                        .set(
+                                            mapOf(
+                                                "uid" to uid,
+                                                "email" to email,
+                                                "username" to username
+                                            )
+                                        )
+                                }
+                                onRegisterSuccess()
+                            }
+                        }
+
                         else -> {}
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(Modifier.height(24.dp))
 
             Text(
                 text = "© 2025 Healthcare. All rights reserved.",
@@ -334,5 +366,3 @@ fun RegisterScreen(
         }
     }
 }
-
-private fun AuthViewModel.setError(string: String) {}
