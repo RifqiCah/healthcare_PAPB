@@ -1,22 +1,23 @@
 package com.example.healthcare.di
 
-import com.example.healthcare.data.remote.NewsApiService // <-- Perhatikan ejaan (ApiService, bukan APIService)
+import com.example.healthcare.data.remote.NewsApiService
 import com.example.healthcare.data.repository.ArticleRepositoryImpl
 import com.example.healthcare.domain.repository.ArticleRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent // <-- Ini solusi error SingletonComponent
+import dagger.hilt.components.SingletonComponent
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import javax.inject.Named // <-- Ini solusi error Annotation
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object ArticleModule {
 
-    private const val NEWS_BASE_URL = "https://newsapi.org/v2/"
+    // URL BARU: NewsData.io
+    private const val NEWS_BASE_URL = "https://newsdata.io/api/1/"
 
     @Provides
     @Singleton
@@ -31,7 +32,6 @@ object ArticleModule {
     @Provides
     @Singleton
     fun provideNewsApiService(@Named("NewsRetrofit") retrofit: Retrofit): NewsApiService {
-        // Perhatikan bagian dalam kurung: NewsApiService::class.java
         return retrofit.create(NewsApiService::class.java)
     }
 

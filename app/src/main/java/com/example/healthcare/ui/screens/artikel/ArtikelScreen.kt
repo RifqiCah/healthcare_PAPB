@@ -1,18 +1,14 @@
-// Di dalam file /ui/screens/artikel/ArtikelScreen.kt
 package com.example.healthcare.ui.screens.artikel
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
@@ -30,148 +26,173 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.example.healthcare.R
+import com.example.healthcare.domain.model.Article
+import com.example.healthcare.viewmodel.ArticleViewModel
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ArtikelScreen(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier, // Note: Pastikan parent tidak memberikan padding top di sini
     onBackClick: () -> Unit,
-    onArtikelDetailClick: (String) -> Unit
+    onArtikelDetailClick: (String) -> Unit,
+    viewModel: ArticleViewModel = hiltViewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
-    var selectedCategory by remember { mutableStateOf("Semua") }
-    var currentPage by remember { mutableStateOf(1) }
     var isSearchActive by remember { mutableStateOf(false) }
 
-    val categories = listOf("Semua", "Gaya Hidup", "Nutrisi", "Olahraga", "Mental Health", "Penyakit")
+    val categories = listOf("Semua", "Gaya Hidup", "Nutrisi", "Olahraga", "Mental", "Penyakit")
 
-    val dummyArticles = listOf(
-        ArticleItem("Aussie blokes urged to act F.A.S.T by learning the signs of stroke", "Gaya Hidup", "5 min read", "2 hari lalu"),
-        ArticleItem("Simple blood test detects cancer up to 3 years before symptoms appear", "Penyakit", "8 min read", "3 hari lalu"),
-        ArticleItem("How a purge at one obscure panel could disrupt vaccinations", "Penyakit", "6 min read", "1 minggu lalu"),
-        ArticleItem("5 Tips Gaya Hidup Sehat untuk Mahasiswa", "Gaya Hidup", "4 min read", "2 minggu lalu"),
-        ArticleItem("Mengenal Pola Makan Seimbang bagi Kesehatan Tubuh", "Nutrisi", "7 min read", "3 minggu lalu"),
-        ArticleItem("Manfaat Olahraga Rutin untuk Kesehatan Jantung", "Olahraga", "5 min read", "1 bulan lalu"),
-        ArticleItem("Cara Mengelola Stres di Tempat Kerja", "Mental Health", "6 min read", "1 bulan lalu")
-    )
-
-    val filteredArticles = remember(selectedCategory, searchQuery) {
-        dummyArticles.filter { article ->
-            val matchesCategory = selectedCategory == "Semua" || article.category == selectedCategory
-            val matchesSearch = searchQuery.isEmpty() ||
-                    article.title.contains(searchQuery, ignoreCase = true)
-            matchesCategory && matchesSearch
+    val displayedArticles = remember(uiState.articles, searchQuery) {
+        if (searchQuery.isBlank()) {
+            uiState.articles
+        } else {
+            uiState.articles.filter { article ->
+                article.title?.contains(searchQuery, ignoreCase = true) == true
+            }
         }
     }
 
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
-    ) {
+    // Gunakan Box agar layout fleksibel
+    Box(modifier = modifier.fillMaxSize()) {
 
-        /** --- Enhanced Hero Section --- **/
-        item {
-            AnimatedHeroSection()
-            Spacer(modifier = Modifier.height(24.dp))
-        }
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Top
+        ) {
 
-        /** --- Modern Search Bar --- **/
-        item {
-            ModernSearchBar(
-                searchQuery = searchQuery,
-                onSearchChange = { searchQuery = it },
-                isActive = isSearchActive,
-                onActiveChange = { isSearchActive = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-        }
+            /** --- 1. HERO SECTION (Full Immersive) --- **/
+            item {
+                // Bagian ini yang bikin gambar naik ke atas status bar
+                AnimatedHeroSection()
+                Spacer(modifier = Modifier.height(24.dp))
+            }
 
-        /** --- Category Chips --- **/
-        item {
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(horizontal = 20.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                items(categories) { category ->
-                    CategoryChip(
-                        text = category,
-                        isSelected = category == selectedCategory,
-                        onClick = { selectedCategory = category }
+            /** --- 2. Search Bar --- **/
+            item {
+                ModernSearchBar(
+                    searchQuery = searchQuery,
+                    onSearchChange = { searchQuery = it },
+                    isActive = isSearchActive,
+                    onActiveChange = { isSearchActive = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp)
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+            }
+
+            /** --- 3. Category Chips --- **/
+            item {
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(horizontal = 20.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    items(categories) { category ->
+                        CategoryChip(
+                            text = category,
+                            isSelected = category == uiState.selectedCategory,
+                            onClick = { viewModel.fetchArticles(category) }
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+
+            /** --- 4. Content Logic --- **/
+            if (uiState.isLoading && uiState.articles.isEmpty()) {
+                item {
+                    Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
+            } else if (uiState.error != null && uiState.articles.isEmpty()) {
+                item {
+                    ErrorSection(
+                        message = uiState.error ?: "Terjadi Kesalahan",
+                        onRetry = { viewModel.refresh() }
                     )
                 }
+            } else {
+                // Header Text
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Berita Terbaru",
+                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                        )
+                        Text(
+                            text = "${displayedArticles.size} artikel",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
+                if (displayedArticles.isEmpty()) {
+                    item {
+                        Text(
+                            text = "Tidak ada artikel ditemukan.",
+                            modifier = Modifier.fillMaxWidth().padding(20.dp),
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.outline
+                        )
+                    }
+                }
+
+                // Article List
+                itemsIndexed(displayedArticles) { index, article ->
+                    AnimatedArticleCard(
+                        article = article,
+                        index = index,
+                        onClick = { onArtikelDetailClick(article.id) }
+                    )
+                }
+
+                // Load More Button
+                item {
+                    if (uiState.nextPageToken != null && searchQuery.isBlank()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(24.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (uiState.isLoading) {
+                                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                            } else {
+                                OutlinedButton(
+                                    onClick = { viewModel.loadMore() },
+                                    shape = RoundedCornerShape(50)
+                                ) {
+                                    Text("Muat Lebih Banyak")
+                                }
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(80.dp))
+                }
             }
-            Spacer(modifier = Modifier.height(24.dp))
-        }
-
-        /** --- Results Header --- **/
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Artikel Terbaru",
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                )
-                Text(
-                    text = "${filteredArticles.size} artikel",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-
-        /** --- Animated Article List --- **/
-        itemsIndexed(filteredArticles) { index, article ->
-            AnimatedArticleCard(
-                article = article,
-                index = index,
-                onClick = { onArtikelDetailClick(article.title) }
-            )
-        }
-
-        /** --- Enhanced Pagination --- **/
-        if (filteredArticles.isNotEmpty()) {
-            item {
-                ModernPagination(
-                    currentPage = currentPage,
-                    totalPages = 3,
-                    onPageChange = { currentPage = it }
-                )
-            }
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
 
-/** --- DATA CLASS --- **/
-// Jika ArticleData sudah ada di file lain, hapus bagian ini
-// dan sesuaikan import-nya
-data class ArticleItem(
-    val title: String,
-    val category: String,
-    val readTime: String,
-    val publishedTime: String
-)
-
-/** --- ANIMATED HERO SECTION --- **/
+/** --- ANIMATED HERO SECTION (VERSI IMMERSIVE TRANSPARAN) --- **/
 @Composable
 fun AnimatedHeroSection() {
     val infiniteTransition = rememberInfiniteTransition(label = "hero")
@@ -188,9 +209,10 @@ fun AnimatedHeroSection() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(240.dp)
+            .height(300.dp) // Tinggi dibuat cukup besar
             .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
     ) {
+        // 1. GAMBAR BACKGROUND (Memenuhi Box)
         Image(
             painter = painterResource(id = R.drawable.bg_artikel),
             contentDescription = "Header Artikel",
@@ -199,22 +221,29 @@ fun AnimatedHeroSection() {
                 .scale(scale),
             contentScale = ContentScale.Crop
         )
+
+        // 2. GRADIENT OVERLAY (Agar status bar putih tetap terbaca)
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        listOf(
-                            Color.Black.copy(alpha = 0.3f),
-                            Color.Black.copy(alpha = 0.7f)
+                        colors = listOf(
+                            Color.Black.copy(alpha = 0.6f), // Gelap di atas (Status Bar area)
+                            Color.Black.copy(alpha = 0.2f), // Tengah agak terang
+                            Color.Black.copy(alpha = 0.8f)  // Bawah gelap lagi
                         )
                     )
                 )
         )
+
+        // 3. TEKS KONTEN
+        // Menggunakan statusBarsPadding() agar teks turun otomatis di bawah jam/baterai
         Column(
             modifier = Modifier
-                .align(Alignment.Center)
-                .padding(20.dp),
+                .align(Alignment.Center) // Posisikan di tengah
+                .statusBarsPadding()     // PENTING: Memberi jarak aman dari atas
+                .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
@@ -237,8 +266,25 @@ fun AnimatedHeroSection() {
     }
 }
 
-/** --- MODERN SEARCH BAR --- **/
-@OptIn(ExperimentalMaterial3Api::class)
+// --- KOMPONEN PENDUKUNG LAINNYA (Error, SearchBar, Chip, Card) TETAP SAMA ---
+// (Pastikan fungsi-fungsi di bawah ini tetap ada di file kamu)
+
+@Composable
+fun ErrorSection(message: String, onRetry: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(48.dp))
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(text = message, textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.error)
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = onRetry) {
+            Text("Coba Lagi")
+        }
+    }
+}
+
 @Composable
 fun ModernSearchBar(
     searchQuery: String,
@@ -275,7 +321,7 @@ fun ModernSearchBar(
                 decorationBox = { innerTextField ->
                     if (searchQuery.isEmpty()) {
                         Text(
-                            "Cari artikel kesehatan...",
+                            "Cari judul artikel...",
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -296,7 +342,6 @@ fun ModernSearchBar(
     }
 }
 
-/** --- CATEGORY CHIP --- **/
 @Composable
 fun CategoryChip(
     text: String,
@@ -332,11 +377,10 @@ fun CategoryChip(
     }
 }
 
-/** --- ANIMATED ARTICLE CARD --- **/
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnimatedArticleCard(
-    article: ArticleItem,
+    article: Article,
     index: Int,
     onClick: () -> Unit
 ) {
@@ -381,26 +425,39 @@ fun AnimatedArticleCard(
                         .width(120.dp)
                         .height(140.dp)
                         .clip(RoundedCornerShape(topStart = 20.dp, bottomStart = 20.dp))
+                        .background(Color.Gray.copy(alpha = 0.2f))
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.article_img),
-                        contentDescription = article.title,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
+                    if (article.urlToImage != null) {
+                        AsyncImage(
+                            model = article.urlToImage,
+                            contentDescription = article.title,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    } else {
+                        Image(
+                            painter = painterResource(id = R.drawable.article_img),
+                            contentDescription = "Default Image",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+
                     Surface(
                         modifier = Modifier
                             .align(Alignment.TopEnd)
                             .padding(8.dp),
                         shape = RoundedCornerShape(8.dp),
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
                     ) {
                         Text(
-                            text = article.category,
+                            text = article.sourceName ?: "News",
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onPrimary,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
@@ -412,7 +469,7 @@ fun AnimatedArticleCard(
                         .padding(16.dp)
                 ) {
                     Text(
-                        text = article.title,
+                        text = article.title ?: "Tanpa Judul",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             lineHeight = 20.sp
@@ -430,21 +487,24 @@ fun AnimatedArticleCard(
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
-                                imageVector = Icons.Default.DateRange,
+                                imageVector = Icons.Default.Person,
                                 contentDescription = null,
                                 modifier = Modifier.size(14.dp),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = article.readTime,
+                                text = article.author ?: "Admin",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.widthIn(max = 80.dp)
                             )
                         }
 
                         Text(
-                            text = article.publishedTime,
+                            text = article.publishedAt?.take(10) ?: "",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -452,101 +512,5 @@ fun AnimatedArticleCard(
                 }
             }
         }
-    }
-}
-
-/** --- MODERN PAGINATION --- **/
-@Composable
-fun ModernPagination(
-    currentPage: Int,
-    totalPages: Int,
-    onPageChange: (Int) -> Unit
-) {
-    Row(
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 24.dp)
-    ) {
-        // Previous Button
-        IconButton(
-            onClick = { if (currentPage > 1) onPageChange(currentPage - 1) },
-            enabled = currentPage > 1
-        ) {
-            Icon(
-                Icons.Default.ArrowBack,
-                contentDescription = "Previous",
-                tint = if (currentPage > 1)
-                    MaterialTheme.colorScheme.primary
-                else
-                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
-            )
-        }
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        // Page Numbers
-        repeat(totalPages) { index ->
-            val page = index + 1
-            val isCurrentPage = page == currentPage
-
-            val scale by animateFloatAsState(
-                targetValue = if (isCurrentPage) 1.1f else 1f,
-                animationSpec = spring(stiffness = Spring.StiffnessMedium),
-                label = "page scale"
-            )
-
-            Surface(
-                onClick = { onPageChange(page) },
-                modifier = Modifier
-                    .padding(horizontal = 4.dp)
-                    .scale(scale),
-                shape = CircleShape,
-                color = if (isCurrentPage)
-                    MaterialTheme.colorScheme.primary
-                else
-                    Color.Transparent
-            ) {
-                Text(
-                    text = page.toString(),
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = if (isCurrentPage)
-                        MaterialTheme.colorScheme.onPrimary
-                    else
-                        MaterialTheme.colorScheme.onSurface,
-                    fontWeight = if (isCurrentPage) FontWeight.Bold else FontWeight.Normal
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        // Next Button
-        IconButton(
-            onClick = { if (currentPage < totalPages) onPageChange(currentPage + 1) },
-            enabled = currentPage < totalPages
-        ) {
-            Icon(
-                Icons.Default.ArrowForward,
-                contentDescription = "Next",
-                tint = if (currentPage < totalPages)
-                    MaterialTheme.colorScheme.primary
-                else
-                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
-            )
-        }
-    }
-}
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun PreviewArtikelScreen() {
-    MaterialTheme {
-        ArtikelScreen(
-            onBackClick = {},
-            onArtikelDetailClick = {}
-        )
     }
 }

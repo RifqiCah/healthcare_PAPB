@@ -31,5 +31,7 @@ data class Article(
     val publishedAt: String?,
 
     // Konten (biasanya sebagian dari teks)
-    val content: String?
+    val content: String?,
+    //kategori(healthy)
+    val category: String?
 )

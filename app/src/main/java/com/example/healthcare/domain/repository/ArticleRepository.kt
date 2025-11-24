@@ -4,17 +4,18 @@ import com.example.healthcare.domain.model.Article
 
 /**
  * Kontrak (Interface) untuk Repository Artikel.
- * Ini mendefinisikan operasi-operasi data yang tersedia untuk domain layer.
  */
 interface ArticleRepository {
 
     /**
-     * Mengambil daftar artikel dari berbagai sumber (API/cache) berdasarkan kata kunci.
-     * Mengembalikan Result untuk menangani keberhasilan atau kegagalan operasi.
+     * Mengambil daftar artikel.
+     * UPDATE: Sekarang menerima pageToken dan mengembalikan Pair(Artikel, NextPageToken).
      */
-    suspend fun getArticlesByCategory(categoryKeyword: String): Result<List<Article>>
+    suspend fun getArticlesByCategory(
+        categoryKeyword: String,
+        pageToken: String? = null
+    ): Result<Pair<List<Article>, String?>> // <--- PERUBAHAN DISINI
 
-    // Operasi lain bisa ditambahkan di sini, misalnya:
-    // suspend fun getArticleDetail(articleId: String): Result<Article>
-    // suspend fun saveArticleToCache(article: Article)
+    // Mengambil satu artikel dari cache memori
+    fun getArticleById(id: String): Article?
 }

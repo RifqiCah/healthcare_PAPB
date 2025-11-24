@@ -15,81 +15,89 @@ import javax.inject.Inject
 // 1. UI State Definition
 // ===============================================
 
-/**
- * State UI untuk ArticleScreen.
- * Data class ini menyimpan semua data yang dibutuhkan tampilan.
- */
 data class ArticleUiState(
     val articles: List<Article> = emptyList(),
     val isLoading: Boolean = false,
-    val selectedCategory: String = "Semua", // Untuk memantau tab mana yang aktif
-    val error: String? = null
+    val selectedCategory: String = "Semua",
+    val error: String? = null,
+
+    // TAMBAHAN BARU: Menyimpan token untuk halaman berikutnya
+    val nextPageToken: String? = null
 )
 
 // ===============================================
 // 2. ViewModel Implementation
 // ===============================================
 
-@HiltViewModel // <--- WAJIB ADA: Memberitahu Hilt bahwa ini adalah ViewModel
+@HiltViewModel
 class ArticleViewModel @Inject constructor(
     private val repository: ArticleRepository
 ) : ViewModel() {
 
-    // Backing property (bisa diubah di dalam ViewModel)
     private val _uiState = MutableStateFlow(ArticleUiState())
-
-    // Exposed property (hanya bisa dibaca oleh UI)
     val uiState: StateFlow<ArticleUiState> = _uiState
 
-    // Init block: Jalan otomatis saat ViewModel pertama kali dibuat
     init {
         fetchArticles("Semua")
     }
 
-    /**
-     * Mengubah Nama Kategori UI (Bahasa Indonesia) menjadi Query API (Bahasa Inggris).
-     * Contoh: "Olahraga" -> "health AND (exercise OR fitness)"
-     */
     private fun mapCategoryToKeyword(categoryName: String): String {
         return when (categoryName) {
-            "Gaya Hidup" -> "lifestyle AND (health OR wellness)"
-            "Nutrisi" -> "nutrition OR diet OR supplements"
-            "Olahraga" -> "exercise OR fitness OR workout"
-            "Mental" -> "mental health OR psychology OR stress"
-            else -> "health" // Default query untuk "Semua"
+            "Gaya Hidup" -> "pola hidup OR tips sehat OR tidur"
+            "Nutrisi" -> "gizi OR nutrisi OR makanan OR diet"
+            "Olahraga" -> "olahraga OR senam OR lari OR gym"
+            "Mental" -> "kesehatan mental OR stres OR depresi"
+            else -> "health"
         }
     }
 
     /**
-     * Fungsi utama untuk mengambil data.
-     * Dipanggil saat init atau saat user klik tombol Kategori.
+     * Fungsi utama fetch data.
+     * @param isLoadMore: Jika true, berarti kita sedang mengambil halaman ke-2, ke-3, dst.
      */
-    fun fetchArticles(categoryName: String) {
+    fun fetchArticles(categoryName: String, isLoadMore: Boolean = false) {
         val keyword = mapCategoryToKeyword(categoryName)
 
-        // 1. Update State: Loading = true, Hapus Error lama
+        // 1. Tentukan Token (Kalau load more ambil dari state, kalau awal null)
+        val pageToken = if (isLoadMore) _uiState.value.nextPageToken else null
+
+        // 2. Update State Loading
         _uiState.update { currentState ->
-            currentState.copy(
-                isLoading = true,
-                error = null,
-                selectedCategory = categoryName
-            )
+            // Kalau Load More, kita tidak perlu set isLoading=true (biar layar gak blank putih),
+            // atau bisa bikin state khusus 'isLoadingMore'.
+            // Di sini kita biarkan isLoading false jika load more agar UX lebih halus.
+            if (isLoadMore) {
+                currentState.copy(error = null)
+            } else {
+                // Kalau Refresh/Ganti Kategori, baru munculkan loading full screen
+                currentState.copy(
+                    isLoading = true,
+                    error = null,
+                    selectedCategory = categoryName,
+                    articles = emptyList() // Kosongkan list dulu biar bersih
+                )
+            }
         }
 
-        // 2. Panggil Repository di Background Thread
         viewModelScope.launch {
-            repository.getArticlesByCategory(keyword)
-                .onSuccess { articlesList ->
-                    // Berhasil: Masukkan data ke state, matikan loading
-                    _uiState.update {
-                        it.copy(
-                            articles = articlesList,
+            // Panggil Repository dengan pageToken
+            repository.getArticlesByCategory(keyword, pageToken)
+                .onSuccess { (newArticles, nextToken) ->
+                    _uiState.update { current ->
+                        current.copy(
+                            // LOGIKA PENTING:
+                            // Jika Load More -> Gabungkan list lama + list baru
+                            // Jika Awal -> Pakai list baru saja
+                            articles = if (isLoadMore) current.articles + newArticles else newArticles,
+
+                            // Simpan token halaman berikutnya
+                            nextPageToken = nextToken,
+
                             isLoading = false
                         )
                     }
                 }
                 .onFailure { exception ->
-                    // Gagal: Simpan pesan error, matikan loading
                     _uiState.update {
                         it.copy(
                             error = exception.message ?: "Gagal memuat data",
@@ -101,10 +109,22 @@ class ArticleViewModel @Inject constructor(
     }
 
     /**
-     * Opsional: Fungsi untuk me-refresh data (misal untuk fitur SwipeRefresh)
+     * Fungsi ini dipanggil oleh UI ketika user scroll mentok bawah / klik tombol "Load More"
      */
+    fun loadMore() {
+        // Hanya jalan jika ada token halaman berikutnya
+        if (_uiState.value.nextPageToken != null) {
+            fetchArticles(_uiState.value.selectedCategory, isLoadMore = true)
+        }
+    }
+
     fun refresh() {
-        // Ambil ulang data berdasarkan kategori yang sedang dipilih saat ini
-        fetchArticles(_uiState.value.selectedCategory)
+        // Refresh berarti ambil ulang dari halaman pertama (isLoadMore = false)
+        fetchArticles(_uiState.value.selectedCategory, isLoadMore = false)
+    }
+
+    // --- FUNGSI DETAIL ---
+    fun getArticleDetail(id: String): Article? {
+        return repository.getArticleById(id)
     }
 }

@@ -24,7 +24,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "NEWS_API_KEY", "\"7049ab40f8bb467b9ca0655a478aaeba\"")
+        buildConfigField("String", "NEWS_API_KEY", "\"pub_164eab82ee674133b65cdb1a358a377d\"")
     }
 
     buildTypes {
@@ -91,6 +91,9 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    // gambar artikel
+    implementation("io.coil-kt:coil-compose:2.5.0")
 }
 
 // Konfigurasi Kapt (Sekarang pasti dikenali karena plugin sudah ada)
