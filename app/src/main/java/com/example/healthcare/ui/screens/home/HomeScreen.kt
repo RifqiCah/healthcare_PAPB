@@ -30,8 +30,8 @@ import kotlinx.coroutines.delay
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
-    onSistemPakarClick: @Composable () -> Unit,
-    onArtikelClick: @Composable () -> Unit
+    onSistemPakarClick:  () -> Unit,
+    onArtikelClick:  () -> Unit
 ) {
     // Animasi untuk fade in
     var visible by remember { mutableStateOf(false) }

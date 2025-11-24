@@ -4,24 +4,25 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.healthcare.domain.model.Article
 import com.example.healthcare.domain.repository.ArticleRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject // Diperlukan jika Anda menggunakan Hilt atau Koin
+import javax.inject.Inject
 
 // ===============================================
 // 1. UI State Definition
 // ===============================================
 
 /**
- * Merepresentasikan state UI saat ini untuk ArtikelScreen.
- * Semua yang ingin ditampilkan di UI harus ada di sini.
+ * State UI untuk ArticleScreen.
+ * Data class ini menyimpan semua data yang dibutuhkan tampilan.
  */
 data class ArticleUiState(
     val articles: List<Article> = emptyList(),
     val isLoading: Boolean = false,
-    val selectedCategory: String = "Semua", // Kategori yang sedang dipilih
+    val selectedCategory: String = "Semua", // Untuk memantau tab mana yang aktif
     val error: String? = null
 )
 
@@ -29,72 +30,81 @@ data class ArticleUiState(
 // 2. ViewModel Implementation
 // ===============================================
 
+@HiltViewModel // <--- WAJIB ADA: Memberitahu Hilt bahwa ini adalah ViewModel
 class ArticleViewModel @Inject constructor(
-    // ArticleRepository di-inject; ViewModel hanya berinteraksi dengan kontrak ini.
     private val repository: ArticleRepository
 ) : ViewModel() {
 
-    // MutableStateFlow untuk menyimpan state yang dapat diubah di dalam ViewModel
+    // Backing property (bisa diubah di dalam ViewModel)
     private val _uiState = MutableStateFlow(ArticleUiState())
 
-    // StateFlow yang akan diekspos ke Composable/UI (hanya read-only)
+    // Exposed property (hanya bisa dibaca oleh UI)
     val uiState: StateFlow<ArticleUiState> = _uiState
 
-    // Inisialisasi: Ambil data saat ViewModel pertama kali dibuat
+    // Init block: Jalan otomatis saat ViewModel pertama kali dibuat
     init {
-        // Fetch artikel default saat aplikasi pertama kali masuk ke layar artikel
-        fetchArticles(categoryName = "Semua")
+        fetchArticles("Semua")
     }
 
     /**
-     * Memetakan nama kategori UI ke kata kunci (query) yang akan dikirim ke News API.
+     * Mengubah Nama Kategori UI (Bahasa Indonesia) menjadi Query API (Bahasa Inggris).
+     * Contoh: "Olahraga" -> "health AND (exercise OR fitness)"
      */
     private fun mapCategoryToKeyword(categoryName: String): String {
         return when (categoryName) {
             "Gaya Hidup" -> "lifestyle AND (health OR wellness)"
             "Nutrisi" -> "nutrition OR diet OR supplements"
             "Olahraga" -> "exercise OR fitness OR workout"
-            else -> "health OR medical OR wellness" // "Semua"
+            "Mental" -> "mental health OR psychology OR stress"
+            else -> "health" // Default query untuk "Semua"
         }
     }
 
     /**
-     * Fungsi publik yang dipanggil oleh UI saat kategori diubah.
+     * Fungsi utama untuk mengambil data.
+     * Dipanggil saat init atau saat user klik tombol Kategori.
      */
     fun fetchArticles(categoryName: String) {
-        // Ambil kata kunci API berdasarkan nama kategori UI
         val keyword = mapCategoryToKeyword(categoryName)
 
-        // Update state: Set isLoading ke true dan clear error lama
-        _uiState.update {
-            it.copy(
+        // 1. Update State: Loading = true, Hapus Error lama
+        _uiState.update { currentState ->
+            currentState.copy(
                 isLoading = true,
                 error = null,
-                selectedCategory = categoryName // Simpan kategori yang dipilih
+                selectedCategory = categoryName
             )
         }
 
-        // Jalankan operasi suspend di coroutine scope milik ViewModel
+        // 2. Panggil Repository di Background Thread
         viewModelScope.launch {
             repository.getArticlesByCategory(keyword)
-                .onSuccess { articles ->
-                    // Update state saat pengambilan data berhasil
+                .onSuccess { articlesList ->
+                    // Berhasil: Masukkan data ke state, matikan loading
                     _uiState.update {
                         it.copy(
-                            articles = articles,
+                            articles = articlesList,
                             isLoading = false
                         )
                     }
                 }
-                .onFailure { error ->
-                    // Update state saat terjadi kegagalan (jaringan/parsing)
+                .onFailure { exception ->
+                    // Gagal: Simpan pesan error, matikan loading
                     _uiState.update {
                         it.copy(
-                            error = error.message ?: "Gagal memuat artikel.",
+                            error = exception.message ?: "Gagal memuat data",
                             isLoading = false
                         )
                     }
                 }
         }
+    }
+
+    /**
+     * Opsional: Fungsi untuk me-refresh data (misal untuk fitur SwipeRefresh)
+     */
+    fun refresh() {
+        // Ambil ulang data berdasarkan kategori yang sedang dipilih saat ini
+        fetchArticles(_uiState.value.selectedCategory)
     }
 }

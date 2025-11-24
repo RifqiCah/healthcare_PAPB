@@ -1,4 +1,4 @@
-package com.example.healthcare.data.remote.model
+package com.example.healthcare.data.model
 
 import com.google.gson.annotations.SerializedName
 

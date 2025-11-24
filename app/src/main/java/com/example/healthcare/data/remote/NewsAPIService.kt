@@ -1,6 +1,6 @@
 package com.example.healthcare.data.remote
 
-import com.example.healthcare.data.remote.model.NewsApiResponse
+import com.example.healthcare.data.model.NewsApiResponse
 import retrofit2.http.GET
 import retrofit2.http.Query
 

@@ -12,7 +12,20 @@
           "package_name": "com.example.healthcare"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "590644392795-e1ejgd3t6f9u73psclrt3naj4dekf363.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.healthcare",
+            "certificate_hash": "94734b17dd164464d5689ea25898169ab41277db"
+          }
+        },
+        {
+          "client_id": "590644392795-vruvtof364qdhdj9ugsg0lppnc1bdabu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyD_17RtFFzOHVt_MWhuac_n_unm1UIQd4Y"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "590644392795-vruvtof364qdhdj9ugsg0lppnc1bdabu.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

@@ -3,6 +3,12 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("com.google.gms.google-services")
+
+    // --- [PERBAIKAN UTAMA] ---
+    // Jangan gunakan 'alias' jika belum didaftarkan di libs.versions.toml
+    // Gunakan id string manual seperti ini agar pasti jalan:
+    id("kotlin-kapt")
+    id("com.google.dagger.hilt.android")
 }
 
 android {
@@ -39,13 +45,12 @@ android {
     }
     buildFeatures {
         compose = true
-        // BARIS TAMBAHAN: Mengaktifkan fitur BuildConfig.
         buildConfig = true
     }
 }
 
 dependencies {
-
+    // --- Default Libraries ---
     implementation("androidx.compose.material:material-icons-extended")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -57,24 +62,28 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation(libs.androidx.foundation)
+
+    // --- Firebase ---
     implementation(platform("com.google.firebase:firebase-bom:33.5.1"))
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-database-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
 
-    // Retrofit (HTTP client)
+    // --- Retrofit & Network ---
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
-
-    // GSON Converter (untuk Retrofit agar bisa mem-parsing JSON, memperbaiki error 'Unresolved reference 'gson'' sebelumnya)
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-
-    // OkHttp & Logging Interceptor (Sangat disarankan untuk debugging API request/response)
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
-    // Coroutines (untuk operasi jaringan asinkron)
+    // --- Coroutines ---
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
+    // --- HILT DEPENDENCIES ---
+    implementation("com.google.dagger:hilt-android:2.48")
+    kapt("com.google.dagger:hilt-android-compiler:2.48") // <-- Ini butuh id("kotlin-kapt") di atas
+    implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
+
+    // --- Testing ---
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -82,4 +91,9 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+}
+
+// Konfigurasi Kapt (Sekarang pasti dikenali karena plugin sudah ada)
+kapt {
+    correctErrorTypes = true
 }
