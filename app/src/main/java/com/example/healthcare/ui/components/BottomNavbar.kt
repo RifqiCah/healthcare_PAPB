@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.healthcare.ui.navigation.AppRoutes
 
 // Data class untuk item navbar
 data class BottomNavItem(
@@ -33,26 +34,27 @@ data class BottomNavItem(
 // Daftar item navbar
 val bottomNavItems = listOf(
     BottomNavItem(
-        route = "sistem_pakar",
+        route = AppRoutes.SISTEM_PAKAR_SCREEN,
         icon = Icons.Default.MedicalServices,
         label = "Sistem Pakar"
     ),
     BottomNavItem(
-        route = "home",
+        route = AppRoutes.HOME_SCREEN,
         icon = Icons.Default.Home,
         label = "Home"
     ),
     BottomNavItem(
-        route = "artikel",
+        route = AppRoutes.ARTIKEL_SCREEN,
         icon = Icons.Default.Article,
         label = "Artikel"
     ),
     BottomNavItem(
-        route = "profile",
+        route = AppRoutes.PROFILE_SCREEN,
         icon = Icons.Default.Person,
         label = "Profile"
     )
 )
+
 
 @Composable
 fun BottomNavBar(

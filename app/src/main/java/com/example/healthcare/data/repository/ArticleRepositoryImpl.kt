@@ -21,7 +21,7 @@ class ArticleRepositoryImpl @Inject constructor(
     ): Result<Pair<List<Article>, String?>> {
         return try {
             // Gunakan API Key (Bisa pakai BuildConfig atau Hardcode sementara)
-            val myApiKey = "pub_164eab82ee674133b65cdb1a358a377d"
+            val myApiKey = "pub_3d90d6e66e784e2bb222e1ce7a92712d"
 
             // Logic Query: "health" -> null agar ambil semua
             val searchQuery = if (categoryKeyword == "health" || categoryKeyword.contains("health")) null else categoryKeyword
