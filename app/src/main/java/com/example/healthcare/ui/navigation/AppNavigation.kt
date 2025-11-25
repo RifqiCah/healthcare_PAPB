@@ -22,7 +22,7 @@ import com.example.healthcare.ui.screens.sistempakar.SistemPakarScreen
 import com.example.healthcare.ui.screens.sistempakar.GejalaScreen
 import com.example.healthcare.ui.screens.sistempakar.KondisiScreen
 import com.example.healthcare.ui.screens.sistempakar.DetailScreen
-import com.example.healthcare.ui.screens.sistempakar.InfoScreen
+// InfoScreen DIHAPUS IMPORTNYA
 import com.example.healthcare.ui.profile.ProfileScreen
 import com.example.healthcare.ui.screens.ForgotPassword.ForgotPasswordScreen
 
@@ -34,36 +34,23 @@ fun AppNavigation() {
     val navController = rememberNavController()
     val auth = FirebaseAuth.getInstance()
 
-    // ===============================================
-    // 1. FUNGSI UNTUK CLICK (Logic Guest View di Homepage)
-    // Digunakan saat user mengklik fitur yang memerlukan login dari HomeScreen
-    // ===============================================
+    // 1. Navigasi dengan cek Login (Dipakai di onClick)
     fun navigateSecured(route: String) {
         if (auth.currentUser != null) {
-            // Jika sudah login, navigasi ke tujuan
             navController.navigate(route)
         } else {
-            // Jika belum login, navigasi paksa ke LoginScreen
             navController.navigate(AppRoutes.LOGIN_SCREEN)
-            // Catatan: Anda mungkin ingin menambahkan Toast/Snackbar di HomeScreen
-            // untuk memberi tahu pengguna bahwa login diperlukan.
         }
     }
 
-    // ===============================================
-    // 2. FUNGSI UNTUK SCREEN (Perlindungan Screen)
-    // Digunakan untuk melindungi composable screen secara penuh
-    // ===============================================
+    // 2. Screen Guard (Dipakai membungkus Halaman)
     @Composable
     fun SecuredScreen(content: @Composable () -> Unit) {
         if (auth.currentUser != null) {
             content()
         } else {
-            // Jika belum login, lempar paksa ke Login
             LaunchedEffect(Unit) {
                 navController.navigate(AppRoutes.LOGIN_SCREEN) {
-                    // Membersihkan stack navigasi hingga HomeScreen (jika ada)
-                    // agar pengguna tidak bisa kembali ke halaman sensitif
                     popUpTo(AppRoutes.HOME_SCREEN) { inclusive = true }
                 }
             }
@@ -90,7 +77,6 @@ fun AppNavigation() {
 
         composable(AppRoutes.REGISTER_SCREEN) {
             RegisterScreen(
-                // Setelah register berhasil, kembali ke Login Screen
                 onRegisterSuccess = { navController.popBackStack() },
                 onBackClick = { navController.popBackStack() }
             )
@@ -102,33 +88,22 @@ fun AppNavigation() {
             )
         }
 
-        // == HOME SCREEN (Akses Guest Diizinkan) ==
+        // == HOME SCREEN ==
         composable(AppRoutes.HOME_SCREEN) {
             Scaffold(
                 bottomBar = { FloatingBottomNavBar(navController) }
             ) { paddingValues ->
                 HomeScreen(
                     modifier = Modifier.padding(paddingValues),
-
-                    // MENGGUNAKAN LOGIC GUEST VIEW:
-                    // Panggilan ke navigateSecured() akan mengecek status login.
-                    onSistemPakarClick = {
-                        navigateSecured(AppRoutes.SISTEM_PAKAR_SCREEN)
-                    },
-                    onArtikelClick = {
-                        navigateSecured(AppRoutes.ARTIKEL_SCREEN)
-                    }
+                    onSistemPakarClick = { navigateSecured(AppRoutes.SISTEM_PAKAR_SCREEN) },
+                    onArtikelClick = { navigateSecured(AppRoutes.ARTIKEL_SCREEN) }
                 )
             }
         }
 
-        // ===============================================
-        // == SEMUA ROUTE DI BAWAH INI DILINDUNGI SECUREDSCREEN
-        // ===============================================
-
         // == PROFILE ==
         composable(AppRoutes.PROFILE_SCREEN) {
-            SecuredScreen { // Perlindungan
+            SecuredScreen {
                 Scaffold(
                     bottomBar = { FloatingBottomNavBar(navController) }
                 ) { paddingValues ->
@@ -148,7 +123,7 @@ fun AppNavigation() {
 
         // == ARTIKEL ==
         composable(AppRoutes.ARTIKEL_SCREEN) {
-            SecuredScreen { // Perlindungan
+            SecuredScreen {
                 Scaffold(
                     bottomBar = { FloatingBottomNavBar(navController) }
                 ) { paddingValues ->
@@ -167,7 +142,7 @@ fun AppNavigation() {
             route = AppRoutes.ARTIKEL_DETAIL_SCREEN,
             arguments = listOf(navArgument(AppRoutes.ARTIKEL_DETAIL_ARG_ID) { type = NavType.StringType })
         ) { backStackEntry ->
-            SecuredScreen { // Perlindungan
+            SecuredScreen {
                 val artikelId = backStackEntry.arguments?.getString(AppRoutes.ARTIKEL_DETAIL_ARG_ID)
                 ReadArtikelScreen(
                     itemId = artikelId,
@@ -178,41 +153,37 @@ fun AppNavigation() {
 
         // == SISTEM PAKAR ==
         composable(AppRoutes.SISTEM_PAKAR_SCREEN) {
-            SecuredScreen { // Perlindungan
+            SecuredScreen {
                 Scaffold(bottomBar = { FloatingBottomNavBar(navController) }) { paddingValues ->
                     SistemPakarScreen(
                         modifier = Modifier.padding(paddingValues),
-                        onMulaiClick = { navController.navigate(AppRoutes.INFO_SCREEN) },
+                        // UBAH DISINI: Langsung ke GejalaScreen
+                        onMulaiClick = { navController.navigate(AppRoutes.GEJALA_SCREEN) },
                         onBackClick = { navController.popBackStack() }
                     )
                 }
             }
         }
 
-        composable(AppRoutes.INFO_SCREEN) {
-            SecuredScreen { // Perlindungan
-                InfoScreen(
-                    onBackClick = { navController.popBackStack() },
-                    onLanjutClick = { navController.navigate(AppRoutes.GEJALA_SCREEN) }
-                )
-            }
-        }
+        // HAPUS ROUTE INFO SCREEN DI SINI
 
         composable(AppRoutes.GEJALA_SCREEN) {
-            SecuredScreen { // Perlindungan
+            SecuredScreen {
                 GejalaScreen(
                     onBackClick = { navController.popBackStack() },
+                    // Setelah Gejala -> Lanjut ke Kondisi (atau langsung Detail kalau mau skip kondisi)
                     onLanjutClick = { navController.navigate(AppRoutes.KONDISI_SCREEN) }
                 )
             }
         }
 
         composable(AppRoutes.KONDISI_SCREEN) {
-            SecuredScreen { // Perlindungan
+            SecuredScreen {
                 KondisiScreen(
                     onBackClick = { navController.popBackStack() },
                     onLanjutClick = {
-                        val hasilId = "HasilDiagnosa_001" // Logic dummy ID
+                        // Nanti di sini kita bisa kirim ID hasil diagnosa yang sebenarnya
+                        val hasilId = "HasilDiagnosa_001"
                         navController.navigate("${AppRoutes.PAKAR_DETAIL_ROUTE}/$hasilId")
                     }
                 )
@@ -223,12 +194,13 @@ fun AppNavigation() {
             route = AppRoutes.PAKAR_DETAIL_SCREEN,
             arguments = listOf(navArgument(AppRoutes.PAKAR_DETAIL_ARG_ID) { type = NavType.StringType })
         ) { backStackEntry ->
-            SecuredScreen { // Perlindungan
+            SecuredScreen {
                 val pakarId = backStackEntry.arguments?.getString(AppRoutes.PAKAR_DETAIL_ARG_ID)
                 DetailScreen(
                     itemId = pakarId,
                     onBackClick = { navController.popBackStack() },
                     onSelesaiClick = {
+                        // Kembali ke Menu Awal Sistem Pakar (Reset Stack)
                         navController.popBackStack(route = AppRoutes.SISTEM_PAKAR_SCREEN, inclusive = false)
                     }
                 )

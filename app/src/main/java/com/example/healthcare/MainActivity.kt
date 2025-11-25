@@ -11,6 +11,7 @@ import com.example.healthcare.ui.navigation.AppNavigation
 import com.example.healthcare.ui.theme.HealthcareTheme
 import android.util.Log
 
+
 // 1. WAJIB IMPORT INI
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -19,6 +20,8 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+
         setContent {
             HealthcareTheme {
                 Surface(

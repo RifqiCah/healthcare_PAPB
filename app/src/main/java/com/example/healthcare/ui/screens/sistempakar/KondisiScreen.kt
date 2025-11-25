@@ -1,80 +1,202 @@
-// Di file /ui/screens/sistempakar/KondisiScreen.kt
 package com.example.healthcare.ui.screens.sistempakar
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack // Icon Back
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color // Import Color
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.healthcare.domain.model.KemungkinanPenyakit
 
-// Asumsi HeaderSection, HeroSection, dan StepperSection
-// ada di file lain dan di-import di sini.
+import com.example.healthcare.viewmodel.SistemPakarViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KondisiScreen(
-    // UBAH INI: Ganti nama parameter agar konsisten
     onLanjutClick: () -> Unit,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit, // Ini fungsi kembalinya
+    viewModel: SistemPakarViewModel = hiltViewModel()
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        // Panggil fungsi-fungsi UI Anda
-         HeaderSection()
-         Spacer(Modifier.height(16.dp))
-         HeroSection()
-         Spacer(Modifier.height(24.dp))
-         StepperSection(activeStep = 3)
-         Spacer(Modifier.height(32.dp))
+    val uiState by viewModel.uiState.collectAsState()
+    val hasilDiagnosa = uiState.hasilDiagnosa
 
-        Text("Kondisi yang memungkinkan:", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-        Spacer(Modifier.height(16.dp))
+    // Gunakan Scaffold agar kita bisa pasang Top Bar (Tombol Back di atas)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Hasil Diagnosa") },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) { // Tombol Panah Kembali
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Kembali"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFFF5F5F5) // Samakan dengan background
+                )
+            )
+        }
+    ) { paddingValues ->
 
-        repeat(3) { index ->
-            Card(
+        // Konten utama
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xFFF5F5F5))
+                .padding(paddingValues) // Penting agar tidak ketutup TopBar
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState())
+        ) {
+            // Komponen Header dll (Uncomment jika sudah ada filenya)
+             HeaderSection()
+             Spacer(Modifier.height(16.dp))
+             HeroSection()
+             Spacer(Modifier.height(24.dp))
+
+            // Stepper di step 2 (Hasil)
+            StepperSection(activeStep = 2)
+            Spacer(Modifier.height(32.dp))
+
+            Text(
+                text = "Analisa AI:",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                text = "Berikut adalah kemungkinan kondisi berdasarkan gejala yang Anda input:",
+                fontSize = 14.sp,
+                color = Color.Gray
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            // --- LOGIC MENAMPILKAN HASIL ---
+            if (hasilDiagnosa != null && hasilDiagnosa.kemungkinan.isNotEmpty()) {
+                // Tampilkan setiap kemungkinan penyakit
+                hasilDiagnosa.kemungkinan.forEachIndexed { index, penyakit ->
+                    PenyakitCard(penyakit = penyakit, rank = index + 1)
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+            } else {
+                // Fallback jika data kosong/loading
+                Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                    if (uiState.isLoading) {
+                        CircularProgressIndicator()
+                    } else {
+                        Text("Belum ada hasil diagnosa.", color = Color.Gray)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            // --- TOMBOL NAVIGASI BAWAH ---
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 6.dp),
-                shape = RoundedCornerShape(8.dp)
+                    .padding(top = 24.dp, bottom = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    "Kondisi ${index + 1}",
-                    modifier = Modifier.padding(16.dp),
-                    fontSize = 14.sp
-                )
+                // Tombol Kembali di Bawah (Saya ganti teksnya jadi "Ubah Gejala" biar lebih jelas)
+                OutlinedButton(
+                    onClick = onBackClick,
+                    shape = CircleShape,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Ubah Gejala")
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Button(
+                    onClick = onLanjutClick, // Ke Detail Screen
+                    shape = CircleShape,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3)),
+                    modifier = Modifier.weight(1f),
+                    enabled = hasilDiagnosa != null
+                ) {
+                    Text("Lihat Detail", color = Color.White)
+                }
             }
-        }
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            // UBAH INI: Gunakan onBackClick
-            OutlinedButton(onClick = onBackClick, shape = CircleShape) { Text("Kembali") }
-
-            // UBAH INI: Gunakan onLanjutClick
-            Button(
-                onClick = onLanjutClick,
-                shape = CircleShape,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3))
-            ) { Text("Lanjut", color = Color.White) }
         }
     }
 }
 
-@Preview(showBackground = true, showSystemUi = true)
+// --- CARD UNTUK MENAMPILKAN PENYAKIT ---
 @Composable
-fun PreviewKondisiScreen() {
-    // UBAH INI: Sesuaikan dengan nama parameter baru
-    KondisiScreen(onLanjutClick = {}, onBackClick = {})
+fun PenyakitCard(penyakit: KemungkinanPenyakit, rank: Int) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Nama Penyakit
+                Text(
+                    text = "${rank}. ${penyakit.nama}",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                // Persentase Teks
+                Text(
+                    text = "${penyakit.persentase}%",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (rank == 1) Color(0xFF4CAF50) else Color.Gray // Hijau untuk ranking 1
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Progress Bar
+            val animatedProgress by animateFloatAsState(
+                targetValue = penyakit.persentase / 100f,
+                label = "progress"
+            )
+
+            LinearProgressIndicator(
+                progress = animatedProgress,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(8.dp)
+                    .clip(RoundedCornerShape(4.dp)),
+                color = if (rank == 1) Color(0xFF4CAF50) else MaterialTheme.colorScheme.primary,
+                trackColor = Color.LightGray.copy(alpha = 0.3f)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Deskripsi Singkat
+            Text(
+                text = penyakit.deskripsi,
+                fontSize = 13.sp,
+                color = Color.Gray,
+                maxLines = 2,
+                lineHeight = 18.sp
+            )
+        }
+    }
 }

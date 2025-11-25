@@ -1,8 +1,14 @@
 package com.example.healthcare.domain.model
 
-// Model ini bersih, khusus buat UI. Gak peduli datanya dari Flask atau Firebase.
+// Wadah Utama
 data class Diagnosa(
-    val namaPenyakit: String,
-    val gejala: List<String>,
-    val kepercayaan: String // alias status
+    // List kemungkinan (Top 1, Top 2, Top 3)
+    val kemungkinan: List<KemungkinanPenyakit>
+)
+
+// Detail per Penyakit
+data class KemungkinanPenyakit(
+    val nama: String,
+    val persentase: Int, // Kita bulatkan jadi Int biar gampang di UI (misal 98%)
+    val deskripsi: String
 )

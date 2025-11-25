@@ -1,8 +1,10 @@
 package com.example.healthcare.data.repository
 
 import com.example.healthcare.data.model.PredictionRequest
+import com.example.healthcare.data.model.SymptomItem
 import com.example.healthcare.data.remote.SistemPakarApi
-import com.example.healthcare.domain.model.Diagnosa // <--- Penting: Import Domain Model
+import com.example.healthcare.domain.model.Diagnosa
+import com.example.healthcare.domain.model.KemungkinanPenyakit
 import com.example.healthcare.domain.repository.SistemPakarRepository
 import javax.inject.Inject
 
@@ -10,34 +12,45 @@ class SistemPakarRepositoryImpl @Inject constructor(
     private val api: SistemPakarApi
 ) : SistemPakarRepository {
 
-    // Return type berubah jadi Result<Diagnosa>
+    // --- FUNGSI PREDIKSI (UPDATED) ---
     override suspend fun getPrediction(gejala: List<String>): Result<Diagnosa> {
         return try {
-            // 1. Siapkan Request
             val request = PredictionRequest(gejala)
-
-            // 2. Panggil API
             val response = api.predictDisease(request)
 
-            // 3. Cek apakah sukses
             if (response.isSuccessful && response.body() != null) {
-                val dataMentah = response.body()!!
+                val dataApi = response.body()!!
 
-                // --- PROSES MAPPING (DTO -> DOMAIN) ---
-                // Kita pindahkan data dari 'dataMentah' ke wadah baru 'Diagnosa'
-                val dataBersih = Diagnosa(
-                    namaPenyakit = dataMentah.namaPenyakit,
-                    gejala = dataMentah.gejalaTerdeteksi,
-                    kepercayaan = dataMentah.status
-                )
+                // --- MAPPING BARU (List DTO -> List Domain) ---
+                val listKemungkinan = dataApi.diagnosa.map { item ->
+                    KemungkinanPenyakit(
+                        nama = item.penyakit,
+                        persentase = item.persentase.toInt(), // Ubah Double ke Int
+                        deskripsi = item.deskripsi ?: "Tidak ada deskripsi tersedia."
+                    )
+                }
 
-                // Kembalikan data yang sudah bersih
-                Result.success(dataBersih)
+                // Masukkan list ke dalam objek Diagnosa
+                Result.success(Diagnosa(kemungkinan = listKemungkinan))
             } else {
-                Result.failure(Exception("Error Server: ${response.code()} ${response.message()}"))
+                Result.failure(Exception("Error Server: ${response.code()}"))
             }
         } catch (e: Exception) {
-            Result.failure(e) // Error koneksi/internet
+            Result.failure(e)
+        }
+    }
+
+    // --- FUNGSI AMBIL GEJALA (TETAP SAMA) ---
+    override suspend fun getSymptoms(): Result<List<SymptomItem>> {
+        return try {
+            val response = api.getSymptoms()
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!.data)
+            } else {
+                Result.failure(Exception("Gagal mengambil data gejala"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 }

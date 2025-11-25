@@ -18,7 +18,7 @@ object AppRoutes {
     const val SISTEM_PAKAR_SCREEN = "sistem_pakar"
     const val GEJALA_SCREEN = "gejala"
     const val KONDISI_SCREEN = "kondisi"
-    const val INFO_SCREEN = "info"
+
 
     // --- Rute Detail Sistem Pakar (BARU) ---
     const val PAKAR_DETAIL_ROUTE = "pakar_detail"

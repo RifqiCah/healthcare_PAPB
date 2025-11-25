@@ -48,10 +48,10 @@ fun StepperSection(activeStep: Int) {
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        StepCircle(1, "Info", activeStep == 1)
-        StepCircle(2, "Gejala", activeStep == 2)
-        StepCircle(3, "Kondisi", activeStep == 3)
-        StepCircle(4, "Detail", activeStep == 4)
+
+        StepCircle(1, "Gejala", activeStep == 1)
+        StepCircle(2, "Kondisi", activeStep == 2)
+        StepCircle(3, "Detail", activeStep == 3)
     }
 }
 

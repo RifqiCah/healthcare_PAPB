@@ -64,6 +64,7 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
 
+
     // Menggunakan string manual untuk UI/Graphics/Preview untuk konsistensi dengan kode Anda
     implementation(libs.androidx.ui)
     implementation("androidx.compose.ui:ui-graphics")
@@ -78,6 +79,7 @@ dependencies {
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-database-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation("com.google.firebase:firebase-storage-ktx")
 
     // --- Google Sign In SDK (PENTING untuk LoginScreen) ---
     implementation("com.google.android.gms:play-services-auth:21.0.0")
@@ -99,6 +101,8 @@ dependencies {
     // --- Library Tambahan (Coil) ---
     implementation("io.coil-kt:coil-compose:2.5.0")
 
+
+
     // --- Testing ---
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -107,6 +111,7 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
 }
 
 kapt {

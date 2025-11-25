@@ -1,6 +1,9 @@
 package com.example.healthcare.ui.profile
 
-import androidx.compose.animation.*
+import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -21,20 +24,45 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
+import com.example.healthcare.viewmodel.ProfileViewModel
 
 @Composable
 fun ProfileScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
-    onLogoutClick: () -> Unit
+    onLogoutClick: () -> Unit,
+    viewModel: ProfileViewModel = hiltViewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showChangePasswordDialog by remember { mutableStateOf(false) }
+
+    // --- LAUNCHER GALERI (Untuk Upload Foto) ---
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        // Jika user memilih foto, kirim ke ViewModel
+        uri?.let { viewModel.updateProfilePicture(it) }
+    }
+
+    LaunchedEffect(uiState.passwordChangeMessage) {
+        uiState.passwordChangeMessage?.let { message ->
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            if (message.contains("Sukses")) showChangePasswordDialog = false
+            viewModel.clearMessage()
+        }
+    }
 
     Box(
         modifier = modifier
@@ -45,10 +73,17 @@ fun ProfileScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(bottom = 80.dp) // Space for floating bottom nav
+                .padding(bottom = 80.dp)
         ) {
-            // Header Section with Gradient
-            ProfileHeader()
+            // Header Section (Kita kirim data ke sini)
+            ProfileHeader(
+                displayName = uiState.displayName,
+                photoUrl = uiState.photoUrl,
+                onAvatarClick = {
+                    // Buka Galeri saat avatar diklik
+                    imagePickerLauncher.launch("image/*")
+                }
+            )
 
             // Profile Information
             Column(
@@ -57,96 +92,60 @@ fun ProfileScreen(
                     .padding(horizontal = 20.dp)
             ) {
                 Spacer(modifier = Modifier.height(24.dp))
-
-                Text(
-                    text = "Informasi Akun",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-
+                Text("Informasi Akun", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Username Info Card
-                InfoCard(
-                    icon = Icons.Outlined.Person,
-                    label = "Username",
-                    value = "Nama Pengguna"
-                )
-
+                InfoCard(Icons.Outlined.Person, "Username", uiState.displayName)
                 Spacer(modifier = Modifier.height(12.dp))
-
-                // Email Info Card
-                InfoCard(
-                    icon = Icons.Outlined.Email,
-                    label = "Email",
-                    value = "user@example.com"
-                )
-
+                InfoCard(Icons.Outlined.Email, "Email", uiState.email)
                 Spacer(modifier = Modifier.height(12.dp))
-
-                // Password Info Card (Hidden)
-                InfoCard(
-                    icon = Icons.Outlined.Lock,
-                    label = "Password",
-                    value = "••••••••",
-                    isPassword = true
-                )
+                InfoCard(Icons.Outlined.Lock, "Password", "••••••••", isPassword = true)
 
                 Spacer(modifier = Modifier.height(24.dp))
-
-                // Change Password Button
-                ChangePasswordButton(
-                    onClick = { showChangePasswordDialog = true }
-                )
-
+                ChangePasswordButton(onClick = { showChangePasswordDialog = true })
                 Spacer(modifier = Modifier.height(16.dp))
-
-                // Logout Button
-                LogoutButton(
-                    onClick = { showLogoutDialog = true }
-                )
-
+                LogoutButton(onClick = { showLogoutDialog = true })
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }
+
+        if (uiState.isLoading) {
+            Box(
+                modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background.copy(alpha = 0.5f)),
+                contentAlignment = Alignment.Center
+            ) { CircularProgressIndicator() }
+        }
     }
 
-    // Change Password Dialog
     if (showChangePasswordDialog) {
         ChangePasswordDialog(
             onDismiss = { showChangePasswordDialog = false },
-            onConfirm = { oldPassword, newPassword ->
-                showChangePasswordDialog = false
-                // TODO: Implement password change logic
-            }
+            onConfirm = { old, new -> viewModel.changePassword(old, new) }
         )
     }
 
-    // Logout Confirmation Dialog
     if (showLogoutDialog) {
         LogoutDialog(
             onDismiss = { showLogoutDialog = false },
-            onConfirm = {
-                showLogoutDialog = false
-                onLogoutClick()
-            }
+            onConfirm = { showLogoutDialog = false; onLogoutClick() }
         )
     }
 }
 
+// --- UPDATE HEADER ---
 @Composable
-fun ProfileHeader() {
+fun ProfileHeader(
+    displayName: String,
+    photoUrl: String?,
+    onAvatarClick: () -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(220.dp)
             .background(
                 brush = Brush.verticalGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.primaryContainer,
-                        MaterialTheme.colorScheme.surface
-                    )
+                    colors = listOf(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.surface)
                 )
             )
     ) {
@@ -157,31 +156,53 @@ fun ProfileHeader() {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Profile Avatar
+            // Profile Avatar (Bisa Diklik)
             Box(
                 modifier = Modifier
                     .size(100.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primary)
-                    .border(
-                        width = 4.dp,
-                        color = MaterialTheme.colorScheme.surface,
-                        shape = CircleShape
-                    ),
+                    .border(4.dp, MaterialTheme.colorScheme.surface, CircleShape)
+                    .clickable { onAvatarClick() }, // <--- Klik untuk ganti foto
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = "Profile Picture",
-                    modifier = Modifier.size(50.dp),
-                    tint = MaterialTheme.colorScheme.onPrimary
-                )
+                if (photoUrl != null) {
+                    // Jika ada foto, tampilkan pakai Coil
+                    AsyncImage(
+                        model = photoUrl,
+                        contentDescription = "Profile Picture",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    // Jika tidak ada, tampilkan icon default
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = null,
+                        modifier = Modifier.size(50.dp),
+                        tint = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+
+                // Ikon Edit Kecil (Opsional, biar user tau bisa diklik)
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(8.dp)
+                        .size(24.dp)
+                        .background(MaterialTheme.colorScheme.primary, CircleShape)
+                        .border(2.dp, MaterialTheme.colorScheme.surface, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.Edit, null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(14.dp))
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // GANTI TEKS DI SINI
             Text(
-                text = "Profil Saya",
+                text = "Hello, $displayName", // <--- Dinamis
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -190,6 +211,8 @@ fun ProfileHeader() {
     }
 }
 
+// ... (Sisa Kode InfoCard, Button, Dialogs SAMA SAJA) ...
+// (Kamu tidak perlu mengubah kode InfoCard ke bawah)
 @Composable
 fun InfoCard(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
