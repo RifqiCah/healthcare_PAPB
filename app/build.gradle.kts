@@ -1,14 +1,14 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose)
-    id("com.google.gms.google-services")
 
-    // --- [PERBAIKAN UTAMA] ---
-    // Jangan gunakan 'alias' jika belum didaftarkan di libs.versions.toml
-    // Gunakan id string manual seperti ini agar pasti jalan:
+    // Terapkan plugin Compose Compiler, Hilt, dan Kapt
+    id("org.jetbrains.kotlin.plugin.compose")
     id("kotlin-kapt")
     id("com.google.dagger.hilt.android")
+
+    // Terapkan plugin Firebase Google Services
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -24,6 +24,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
+        // Menggunakan API Key dari kode lama
         buildConfigField("String", "NEWS_API_KEY", "\"pub_3d90d6e66e784e2bb222e1ce7a92712d\"")
     }
 
@@ -47,6 +48,12 @@ android {
         compose = true
         buildConfig = true
     }
+
+    // Konfigurasi Compose Compiler
+    composeOptions {
+        // Menggunakan versi yang lebih stabil (1.5.10 dari kode Anda)
+        kotlinCompilerExtensionVersion = "1.5.10"
+    }
 }
 
 dependencies {
@@ -56,9 +63,12 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
+
+    // Menggunakan string manual untuk UI/Graphics/Preview untuk konsistensi dengan kode Anda
     implementation(libs.androidx.ui)
-    implementation(libs.androidx.ui.graphics)
-    implementation(libs.androidx.ui.tooling.preview)
+    implementation("androidx.compose.ui:ui-graphics")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+
     implementation(libs.androidx.material3)
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation(libs.androidx.foundation)
@@ -68,6 +78,9 @@ dependencies {
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-database-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
+
+    // --- Google Sign In SDK (PENTING untuk LoginScreen) ---
+    implementation("com.google.android.gms:play-services-auth:21.0.0")
 
     // --- Retrofit & Network ---
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
@@ -80,23 +93,22 @@ dependencies {
 
     // --- HILT DEPENDENCIES ---
     implementation("com.google.dagger:hilt-android:2.48")
-    kapt("com.google.dagger:hilt-android-compiler:2.48") // <-- Ini butuh id("kotlin-kapt") di atas
+    kapt("com.google.dagger:hilt-android-compiler:2.48")
     implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
+
+    // --- Library Tambahan (Coil) ---
+    implementation("io.coil-kt:coil-compose:2.5.0")
 
     // --- Testing ---
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.ui.test.junit4)
-    debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
-
-    // gambar artikel
-    implementation("io.coil-kt:coil-compose:2.5.0")
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    debugImplementation("androidx.compose.ui:ui-tooling")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
 
-// Konfigurasi Kapt (Sekarang pasti dikenali karena plugin sudah ada)
 kapt {
     correctErrorTypes = true
 }

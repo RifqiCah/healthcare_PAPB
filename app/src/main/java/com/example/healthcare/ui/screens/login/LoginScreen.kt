@@ -1,5 +1,8 @@
 package com.example.healthcare.ui.screens.login
 
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -18,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -30,6 +34,71 @@ import com.example.healthcare.viewmodel.AuthState
 import com.example.healthcare.viewmodel.AuthViewModel
 import androidx.compose.ui.res.painterResource
 import com.example.healthcare.R
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
+import com.google.firebase.auth.GoogleAuthProvider
+
+// === FUNGSI GOOGLE SIGN-IN LAUNCHER (Digunakan di Login & Register) ===
+@Composable
+fun rememberGoogleSignInLauncher(
+    viewModel: AuthViewModel,
+    onSignInSuccess: () -> Unit
+): () -> Unit {
+    val context = LocalContext.current
+
+    // Konfigurasi Google Sign-In Options (GSO)
+    val gso = remember {
+        GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(context.getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+    }
+    val googleSignInClient = remember { GoogleSignIn.getClient(context, gso) }
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        try {
+            val account = task.getResult(ApiException::class.java)!!
+            val idToken = account.idToken
+
+            if (idToken != null) {
+                // Kirim token ke ViewModel untuk diotentikasi Firebase
+                val credential = GoogleAuthProvider.getCredential(idToken, null)
+                viewModel.signInWithGoogle(credential)
+            } else {
+                Log.e("GoogleSignIn", "ID Token is null.")
+                // REVISI: Gunakan setAuthState
+                viewModel.setAuthState(AuthState.Error("Gagal mendapatkan token Google."))
+            }
+        } catch (e: ApiException) {
+            // Penanganan error jika dibatalkan atau gagal
+            if (e.statusCode != 12501) { // 12501 = Cancelled by user
+                Log.w("GoogleSignIn", "Google sign in failed", e)
+                // REVISI: Gunakan setAuthState
+                viewModel.setAuthState(AuthState.Error("Sign-In Google dibatalkan atau gagal: ${e.statusCode}"))
+            } else {
+                // REVISI: Gunakan setAuthState
+                viewModel.setAuthState(AuthState.Idle) // Reset state jika dibatalkan
+            }
+        }
+    }
+
+    // Mengamati AuthState untuk navigasi
+    val authState = viewModel.authState.collectAsState()
+    LaunchedEffect(authState.value) {
+        if (authState.value is AuthState.Success) {
+            onSignInSuccess()
+        }
+    }
+
+    // Mengembalikan fungsi yang memicu Google Sign-In UI
+    return { launcher.launch(googleSignInClient.signInIntent) }
+}
+// ====================================================================
+
 
 @Composable
 fun LoginScreen(
@@ -45,6 +114,12 @@ fun LoginScreen(
 
     val authState = viewModel.authState.collectAsState()
     val scrollState = rememberScrollState()
+
+    // HOOK GOOGLE SIGN-IN
+    val onGoogleClick = rememberGoogleSignInLauncher(
+        viewModel = viewModel,
+        onSignInSuccess = onLoginSuccess
+    )
 
     Box(
         modifier = Modifier
@@ -149,7 +224,7 @@ fun LoginScreen(
 
                     // TOMBOL GOOGLE FULL-WIDTH
                     OutlinedButton(
-                        onClick = { /* TODO: Google Sign-In */ },
+                        onClick = onGoogleClick,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(48.dp),
@@ -276,13 +351,18 @@ fun LoginScreen(
 
                     // LOGIN BUTTON
                     Button(
-                        onClick = { viewModel.login(email, password) },
+                        onClick = {
+                            if (email.isNotEmpty() && password.isNotEmpty()) {
+                                viewModel.login(email, password)
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5B7BA4)),
-                        elevation = ButtonDefaults.buttonElevation(4.dp)
+                        elevation = ButtonDefaults.buttonElevation(4.dp),
+                        enabled = authState.value != AuthState.Loading
                     ) {
                         Text("Masuk", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                     }
@@ -292,9 +372,13 @@ fun LoginScreen(
                     // AUTH STATE
                     when (val state = authState.value) {
                         is AuthState.Loading -> CircularProgressIndicator()
-                        is AuthState.Error -> Text(state.message, color = Color.Red)
+                        is AuthState.Error -> Text(
+                            text = state.message,
+                            color = Color.Red,
+                            textAlign = TextAlign.Center
+                        )
                         is AuthState.Success -> {
-                            LaunchedEffect(Unit) { onLoginSuccess() }
+                            // Navigasi dihandle oleh LaunchedEffect di rememberGoogleSignInLauncher
                         }
                         else -> {}
                     }

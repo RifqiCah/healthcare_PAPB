@@ -1,42 +1,44 @@
 package com.example.healthcare.viewmodel
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.AuthCredential
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 
 class AuthViewModel : ViewModel() {
 
     private val auth = FirebaseAuth.getInstance()
 
+    // State Internal (Mutable)
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
+
+    // State Eksternal (Read-Only)
     val authState: StateFlow<AuthState> = _authState
 
-    // LOGIN
+    /**
+     * Fungsi setter publik untuk mengubah AuthState dari luar ViewModel.
+     * Digunakan untuk menangani status seperti Idle atau Error dari Composable/Activity.
+     */
+    fun setAuthState(state: AuthState) {
+        _authState.value = state
+    }
+
+    // LOGIN (Email/Password)
     fun login(email: String, password: String) {
         _authState.value = AuthState.Loading
 
         auth.signInWithEmailAndPassword(email, password)
             .addOnSuccessListener {
-
-                val user = auth.currentUser
-                if (user != null && !user.isEmailVerified) {
-                    _authState.value =
-                        AuthState.Error("Email belum diverifikasi. Silakan cek email Anda.")
-                    return@addOnSuccessListener
-                }
-
                 _authState.value = AuthState.Success
             }
             .addOnFailureListener { e ->
                 val msg = when (e.message) {
                     null -> "Login gagal."
                     else -> when {
-                        e.message!!.contains("user record") ||
+                        e.message!!.contains("user not found") ||
                                 e.message!!.contains("no user") -> "Akun tidak ditemukan. Silakan register terlebih dahulu."
-                        e.message!!.contains("password") -> "Password salah."
+                        e.message!!.contains("password") -> "Password salah. Coba lagi."
                         else -> e.message!!
                     }
                 }
@@ -44,24 +46,38 @@ class AuthViewModel : ViewModel() {
             }
     }
 
-    // REGISTER
+    // REGISTER (Email/Password)
     fun register(email: String, password: String) {
         _authState.value = AuthState.Loading
 
         auth.createUserWithEmailAndPassword(email, password)
             .addOnSuccessListener {
-                val user = auth.currentUser
-                user?.sendEmailVerification()
-
-                _authState.value =
-                    AuthState.Error("Akun berhasil dibuat. Cek email Anda untuk verifikasi.")
+                _authState.value = AuthState.Success
             }
             .addOnFailureListener {
-                _authState.value = AuthState.Error(it.message ?: "Register gagal")
+                val msg = if (it.message?.contains("email address is already in use") == true) {
+                    "Email ini sudah terdaftar. Silakan login atau gunakan email lain."
+                } else {
+                    it.message ?: "Register gagal."
+                }
+                _authState.value = AuthState.Error(msg)
             }
     }
 
-    // RESET PASSWORD
+    // SIGN IN DENGAN GOOGLE
+    fun signInWithGoogle(credential: AuthCredential) {
+        _authState.value = AuthState.Loading
+
+        auth.signInWithCredential(credential)
+            .addOnSuccessListener {
+                _authState.value = AuthState.Success
+            }
+            .addOnFailureListener { e ->
+                _authState.value = AuthState.Error(e.message ?: "Google Sign-In gagal")
+            }
+    }
+
+    // RESET PASSWORD (Lupa Password)
     fun resetPassword(email: String) {
         _authState.value = AuthState.Loading
 

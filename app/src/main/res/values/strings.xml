@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">healthcare.ui</string>
+    <string name="default_web_client_id" translatable="false">590644392795-e1ejgd3t6f9u73psclrt3naj4dekf363.apps.googleusercontent.com/</string>
 </resources>
