@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -34,28 +35,35 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.healthcare.viewmodel.ProfileViewModel
+import com.example.healthcare.viewmodel.ThemeViewModel
 
 @Composable
 fun ProfileScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
     onLogoutClick: () -> Unit,
-    viewModel: ProfileViewModel = hiltViewModel()
+    viewModel: ProfileViewModel = hiltViewModel(),
+    themeViewModel: ThemeViewModel = hiltViewModel() // Inject ThemeViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    // --- 1. AMBIL STATE TEMA SAAT INI (Untuk Visual RadioButton) ---
+    val currentTheme by themeViewModel.themeState.collectAsState()
+
     val context = LocalContext.current
 
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showChangePasswordDialog by remember { mutableStateOf(false) }
+    var showThemeDialog by remember { mutableStateOf(false) } // State Dialog Tema
 
-    // --- LAUNCHER GALERI (Untuk Upload Foto) ---
+    // --- LAUNCHER UNTUK GANTI FOTO PROFIL ---
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        // Jika user memilih foto, kirim ke ViewModel
         uri?.let { viewModel.updateProfilePicture(it) }
     }
 
+    // --- EFEK TOAST PESAN ---
     LaunchedEffect(uiState.passwordChangeMessage) {
         uiState.passwordChangeMessage?.let { message ->
             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
@@ -67,20 +75,28 @@ fun ProfileScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            // --- SET BACKGROUND GLOBAL GRADIENT ---
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.primaryContainer, // Atas
+                        MaterialTheme.colorScheme.primaryContainer,          // Tengah
+                        MaterialTheme.colorScheme.surface           // Bawah
+                    )
+                )
+            )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(bottom = 80.dp)
+                .padding(bottom = 18.dp) // Padding bawah agar tidak ketutup Navbar
         ) {
-            // Header Section (Kita kirim data ke sini)
+            // Header Section
             ProfileHeader(
                 displayName = uiState.displayName,
                 photoUrl = uiState.photoUrl,
                 onAvatarClick = {
-                    // Buka Galeri saat avatar diklik
                     imagePickerLauncher.launch("image/*")
                 }
             )
@@ -91,32 +107,53 @@ fun ProfileScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp)
             ) {
-                Spacer(modifier = Modifier.height(24.dp))
-                Text("Informasi Akun", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Informasi Akun",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
                 Spacer(modifier = Modifier.height(16.dp))
 
                 InfoCard(Icons.Outlined.Person, "Username", uiState.displayName)
                 Spacer(modifier = Modifier.height(12.dp))
                 InfoCard(Icons.Outlined.Email, "Email", uiState.email)
                 Spacer(modifier = Modifier.height(12.dp))
-                InfoCard(Icons.Outlined.Lock, "Password", "••••••••", isPassword = true)
+                InfoCard(Icons.Outlined.Lock, "Password", "********", isPassword = true)
 
                 Spacer(modifier = Modifier.height(24.dp))
-                ChangePasswordButton(onClick = { showChangePasswordDialog = true })
+
+                // --- TOMBOL GANTI TEMA ---
+                ThemeChangeButton(onClick = { showThemeDialog = true })
+
                 Spacer(modifier = Modifier.height(16.dp))
+
+                ChangePasswordButton(onClick = { showChangePasswordDialog = true })
+
+                Spacer(modifier = Modifier.height(16.dp))
+
                 LogoutButton(onClick = { showLogoutDialog = true })
+
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }
 
+        // Loading Indicator
         if (uiState.isLoading) {
             Box(
-                modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background.copy(alpha = 0.5f)),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background.copy(alpha = 0.5f)),
                 contentAlignment = Alignment.Center
             ) { CircularProgressIndicator() }
         }
     }
 
+    // --- DIALOGS ---
+
+    // 1. Dialog Ganti Password
     if (showChangePasswordDialog) {
         ChangePasswordDialog(
             onDismiss = { showChangePasswordDialog = false },
@@ -124,15 +161,28 @@ fun ProfileScreen(
         )
     }
 
+    // 2. Dialog Logout
     if (showLogoutDialog) {
         LogoutDialog(
             onDismiss = { showLogoutDialog = false },
             onConfirm = { showLogoutDialog = false; onLogoutClick() }
         )
     }
+
+    // 3. Dialog Ganti Tema (DENGAN INDIKATOR VISUAL)
+    if (showThemeDialog) {
+        ThemeSelectionDialog(
+            currentTheme = currentTheme, // Kirim status tema saat ini
+            onDismiss = { showThemeDialog = false },
+            onThemeSelected = { mode ->
+                themeViewModel.changeTheme(mode) // 0=System, 1=Light, 2=Dark
+                // showThemeDialog = false // Hapus komen ini jika ingin dialog langsung nutup
+            }
+        )
+    }
 }
 
-// --- UPDATE HEADER ---
+// --- HEADER TRANSPARAN ---
 @Composable
 fun ProfileHeader(
     displayName: String,
@@ -143,11 +193,6 @@ fun ProfileHeader(
         modifier = Modifier
             .fillMaxWidth()
             .height(220.dp)
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.surface)
-                )
-            )
     ) {
         Column(
             modifier = Modifier
@@ -156,18 +201,17 @@ fun ProfileHeader(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Profile Avatar (Bisa Diklik)
+            // Profile Avatar
             Box(
                 modifier = Modifier
                     .size(100.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primary)
                     .border(4.dp, MaterialTheme.colorScheme.surface, CircleShape)
-                    .clickable { onAvatarClick() }, // <--- Klik untuk ganti foto
+                    .clickable { onAvatarClick() },
                 contentAlignment = Alignment.Center
             ) {
                 if (photoUrl != null) {
-                    // Jika ada foto, tampilkan pakai Coil
                     AsyncImage(
                         model = photoUrl,
                         contentDescription = "Profile Picture",
@@ -175,7 +219,6 @@ fun ProfileHeader(
                         modifier = Modifier.fillMaxSize()
                     )
                 } else {
-                    // Jika tidak ada, tampilkan icon default
                     Icon(
                         imageVector = Icons.Default.Person,
                         contentDescription = null,
@@ -184,7 +227,6 @@ fun ProfileHeader(
                     )
                 }
 
-                // Ikon Edit Kecil (Opsional, biar user tau bisa diklik)
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
@@ -200,9 +242,8 @@ fun ProfileHeader(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // GANTI TEKS DI SINI
             Text(
-                text = "Hello, $displayName", // <--- Dinamis
+                text = "Hello, $displayName",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -211,8 +252,7 @@ fun ProfileHeader(
     }
 }
 
-// ... (Sisa Kode InfoCard, Button, Dialogs SAMA SAJA) ...
-// (Kamu tidak perlu mengubah kode InfoCard ke bawah)
+// --- INFO CARD ---
 @Composable
 fun InfoCard(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
@@ -223,8 +263,8 @@ fun InfoCard(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        tonalElevation = 1.dp
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 2.dp
     ) {
         Row(
             modifier = Modifier
@@ -232,7 +272,6 @@ fun InfoCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Icon Container
             Box(
                 modifier = Modifier
                     .size(48.dp)
@@ -250,7 +289,6 @@ fun InfoCard(
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            // Text Content
             Column(
                 modifier = Modifier.weight(1f)
             ) {
@@ -271,103 +309,132 @@ fun InfoCard(
     }
 }
 
+// --- TOMBOL GANTI TEMA ---
+@Composable
+fun ThemeChangeButton(onClick: () -> Unit) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
+        border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+    ) {
+        // Gunakan ikon Settings atau DarkMode
+        Icon(Icons.Outlined.DarkMode, null, Modifier.size(20.dp))
+        Spacer(Modifier.width(8.dp))
+        Text("Ganti Tema Aplikasi", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+    }
+}
+
 @Composable
 fun ChangePasswordButton(onClick: () -> Unit) {
     var isPressed by remember { mutableStateOf(false) }
-
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.96f else 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
-        label = "scale"
-    )
+    val scale by animateFloatAsState(if (isPressed) 0.96f else 1f, label = "scale")
 
     OutlinedButton(
-        onClick = {
-            isPressed = true
-            onClick()
-        },
+        onClick = { isPressed = true; onClick() },
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp)
             .scale(scale),
         shape = RoundedCornerShape(16.dp),
-        colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = MaterialTheme.colorScheme.primary
-        ),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
         border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
     ) {
-        Icon(
-            imageVector = Icons.Default.Lock,
-            contentDescription = "Change Password",
-            modifier = Modifier.size(20.dp)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = "Ubah Password",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold
-        )
+        Icon(Icons.Default.Lock, null, Modifier.size(20.dp))
+        Spacer(Modifier.width(8.dp))
+        Text("Ubah Password", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
     }
-
-    LaunchedEffect(isPressed) {
-        if (isPressed) {
-            kotlinx.coroutines.delay(100)
-            isPressed = false
-        }
-    }
+    LaunchedEffect(isPressed) { if (isPressed) { kotlinx.coroutines.delay(100); isPressed = false } }
 }
 
 @Composable
 fun LogoutButton(onClick: () -> Unit) {
     var isPressed by remember { mutableStateOf(false) }
-
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.95f else 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
-        label = "scale"
-    )
+    val scale by animateFloatAsState(if (isPressed) 0.95f else 1f, label = "scale")
 
     Button(
-        onClick = {
-            isPressed = true
-            onClick()
-        },
+        onClick = { isPressed = true; onClick() },
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp)
             .scale(scale),
         shape = RoundedCornerShape(16.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer,
-            contentColor = MaterialTheme.colorScheme.error
-        )
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.error)
     ) {
-        Icon(
-            imageVector = Icons.Default.Logout,
-            contentDescription = "Logout",
-            modifier = Modifier.size(20.dp)
+        Icon(Icons.Default.Logout, null, Modifier.size(20.dp))
+        Spacer(Modifier.width(8.dp))
+        Text("Keluar dari Akun", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+    }
+    LaunchedEffect(isPressed) { if (isPressed) { kotlinx.coroutines.delay(100); isPressed = false } }
+}
+
+// --- DIALOG PILIHAN TEMA (VISUAL FIXED) ---
+@Composable
+fun ThemeSelectionDialog(
+    currentTheme: Int, // <-- MENERIMA DATA TEMA
+    onDismiss: () -> Unit,
+    onThemeSelected: (Int) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Pilih Tema", fontWeight = FontWeight.Bold) },
+        text = {
+            Column {
+                ThemeOption(
+                    label = "Ikuti Sistem (Default)",
+                    isSelected = currentTheme == 0, // Cek status
+                    onClick = { onThemeSelected(0) }
+                )
+                ThemeOption(
+                    label = "Mode Terang",
+                    isSelected = currentTheme == 1, // Cek status
+                    onClick = { onThemeSelected(1) }
+                )
+                ThemeOption(
+                    label = "Mode Gelap",
+                    isSelected = currentTheme == 2, // Cek status
+                    onClick = { onThemeSelected(2) }
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Tutup") }
+        }
+    )
+}
+
+@Composable
+fun ThemeOption(
+    label: String,
+    isSelected: Boolean, // <-- MENERIMA STATUS
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RadioButton(
+            selected = isSelected, // Visual RadioButton Nyala/Mati
+            onClick = onClick,
+            colors = RadioButtonDefaults.colors(selectedColor = MaterialTheme.colorScheme.primary)
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
-            text = "Keluar dari Akun",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold
+            text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
         )
     }
-
-    LaunchedEffect(isPressed) {
-        if (isPressed) {
-            kotlinx.coroutines.delay(100)
-            isPressed = false
-        }
-    }
 }
+
+// --- DIALOG CHANGE PASSWORD & LOGOUT ---
 
 @Composable
 fun ChangePasswordDialog(
@@ -377,160 +444,44 @@ fun ChangePasswordDialog(
     var oldPassword by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
-    var showOldPassword by remember { mutableStateOf(false) }
-    var showNewPassword by remember { mutableStateOf(false) }
-    var showConfirmPassword by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        icon = {
-            Icon(
-                imageVector = Icons.Default.Lock,
-                contentDescription = "Change Password",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(32.dp)
-            )
-        },
-        title = {
-            Text(
-                text = "Ubah Password",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
-        },
+        title = { Text("Ubah Password") },
         text = {
-            Column(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                // Old Password Field
+            Column {
                 OutlinedTextField(
                     value = oldPassword,
-                    onValueChange = {
-                        oldPassword = it
-                        errorMessage = ""
-                    },
+                    onValueChange = { oldPassword = it },
                     label = { Text("Password Lama") },
-                    visualTransformation = if (showOldPassword)
-                        VisualTransformation.None
-                    else
-                        PasswordVisualTransformation(),
-                    trailingIcon = {
-                        IconButton(onClick = { showOldPassword = !showOldPassword }) {
-                            Icon(
-                                imageVector = if (showOldPassword)
-                                    Icons.Default.Visibility
-                                else
-                                    Icons.Default.VisibilityOff,
-                                contentDescription = "Toggle password visibility"
-                            )
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    visualTransformation = PasswordVisualTransformation()
                 )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // New Password Field
                 OutlinedTextField(
                     value = newPassword,
-                    onValueChange = {
-                        newPassword = it
-                        errorMessage = ""
-                    },
+                    onValueChange = { newPassword = it },
                     label = { Text("Password Baru") },
-                    visualTransformation = if (showNewPassword)
-                        VisualTransformation.None
-                    else
-                        PasswordVisualTransformation(),
-                    trailingIcon = {
-                        IconButton(onClick = { showNewPassword = !showNewPassword }) {
-                            Icon(
-                                imageVector = if (showNewPassword)
-                                    Icons.Default.Visibility
-                                else
-                                    Icons.Default.VisibilityOff,
-                                contentDescription = "Toggle password visibility"
-                            )
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    visualTransformation = PasswordVisualTransformation()
                 )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Confirm Password Field
                 OutlinedTextField(
                     value = confirmPassword,
-                    onValueChange = {
-                        confirmPassword = it
-                        errorMessage = ""
-                    },
-                    label = { Text("Konfirmasi Password Baru") },
-                    visualTransformation = if (showConfirmPassword)
-                        VisualTransformation.None
-                    else
-                        PasswordVisualTransformation(),
-                    trailingIcon = {
-                        IconButton(onClick = { showConfirmPassword = !showConfirmPassword }) {
-                            Icon(
-                                imageVector = if (showConfirmPassword)
-                                    Icons.Default.Visibility
-                                else
-                                    Icons.Default.VisibilityOff,
-                                contentDescription = "Toggle password visibility"
-                            )
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    isError = errorMessage.isNotEmpty()
+                    onValueChange = { confirmPassword = it },
+                    label = { Text("Konfirmasi") },
+                    visualTransformation = PasswordVisualTransformation()
                 )
-
                 if (errorMessage.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = errorMessage,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall
-                    )
+                    Text(errorMessage, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                 }
             }
         },
         confirmButton = {
-            Button(
-                onClick = {
-                    when {
-                        oldPassword.isEmpty() || newPassword.isEmpty() || confirmPassword.isEmpty() -> {
-                            errorMessage = "Semua field harus diisi"
-                        }
-                        newPassword.length < 6 -> {
-                            errorMessage = "Password minimal 6 karakter"
-                        }
-                        newPassword != confirmPassword -> {
-                            errorMessage = "Password baru tidak cocok"
-                        }
-                        else -> {
-                            onConfirm(oldPassword, newPassword)
-                        }
-                    }
-                },
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text("Simpan")
-            }
+            Button(onClick = {
+                if (newPassword.length < 6) errorMessage = "Password min 6 karakter"
+                else if (newPassword != confirmPassword) errorMessage = "Password tidak cocok"
+                else onConfirm(oldPassword, newPassword)
+            }) { Text("Simpan") }
         },
-        dismissButton = {
-            OutlinedButton(
-                onClick = onDismiss,
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text("Batal")
-            }
-        },
-        shape = RoundedCornerShape(24.dp)
+        dismissButton = { OutlinedButton(onClick = onDismiss) { Text("Batal") } }
     )
 }
 
@@ -541,47 +492,14 @@ fun LogoutDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        icon = {
-            Icon(
-                imageVector = Icons.Default.Logout,
-                contentDescription = "Logout",
-                tint = MaterialTheme.colorScheme.error,
-                modifier = Modifier.size(32.dp)
-            )
-        },
-        title = {
-            Text(
-                text = "Keluar dari Akun?",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
-        },
-        text = {
-            Text(
-                text = "Apakah Anda yakin ingin keluar? Anda perlu login kembali untuk mengakses aplikasi.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        },
+        title = { Text("Keluar?") },
+        text = { Text("Yakin ingin keluar dari aplikasi?") },
         confirmButton = {
             Button(
                 onClick = onConfirm,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error
-                ),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text("Ya, Keluar")
-            }
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+            ) { Text("Ya, Keluar") }
         },
-        dismissButton = {
-            OutlinedButton(
-                onClick = onDismiss,
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text("Batal")
-            }
-        },
-        shape = RoundedCornerShape(24.dp)
+        dismissButton = { OutlinedButton(onClick = onDismiss) { Text("Batal") } }
     )
 }

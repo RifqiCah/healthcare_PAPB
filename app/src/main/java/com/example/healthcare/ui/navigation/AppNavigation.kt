@@ -1,8 +1,11 @@
 package com.example.healthcare.ui.navigation
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.* // Import penting untuk State
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -12,8 +15,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.hilt.navigation.compose.hiltViewModel
 
-import com.example.healthcare.ui.components.FloatingBottomNavBar
-import com.example.healthcare.ui.components.LoginRequiredDialog // Pastikan file ini ada di ui/components/
+import com.example.healthcare.ui.components.StandardBottomNavBarWithLabel
+import com.example.healthcare.ui.components.LoginRequiredDialog
 
 // Screens Import
 import com.example.healthcare.ui.screens.home.HomeScreen
@@ -36,11 +39,8 @@ fun AppNavigation() {
     val navController = rememberNavController()
     val auth = FirebaseAuth.getInstance()
 
-    // State untuk Popup Login
     var showLoginDialog by remember { mutableStateOf(false) }
 
-    // --- FUNGSI NAVIGASI AMAN (Untuk tombol di Home) ---
-    // Kalau User Login -> Jalan. Kalau Guest -> Muncul Popup.
     fun checkAuthAndNavigate(action: () -> Unit) {
         if (auth.currentUser != null) {
             action()
@@ -49,7 +49,6 @@ fun AppNavigation() {
         }
     }
 
-    // Fungsi Logout/Login Ulang dari Popup
     fun navigateToLogin() {
         showLoginDialog = false
         navController.navigate(AppRoutes.LOGIN_SCREEN) {
@@ -57,7 +56,6 @@ fun AppNavigation() {
         }
     }
 
-    // --- RENDER POPUP JIKA STATE TRUE ---
     if (showLoginDialog) {
         LoginRequiredDialog(
             onDismissRequest = { showLoginDialog = false },
@@ -65,17 +63,14 @@ fun AppNavigation() {
         )
     }
 
-    // --- SCREEN GUARD (Untuk memproteksi Halaman Penuh) ---
-    // Digunakan di Profile, Artikel, dan Sistem Pakar
     @Composable
     fun LoginGuardScreen(content: @Composable () -> Unit) {
         if (auth.currentUser != null) {
             content()
         } else {
-            // Jika Guest memaksa masuk (misal lewat BottomBar), tendang balik & munculkan popup
             LaunchedEffect(Unit) {
                 showLoginDialog = true
-                navController.popBackStack() // Kembali ke layar sebelumnya (biasanya Home)
+                navController.popBackStack()
             }
         }
     }
@@ -87,74 +82,130 @@ fun AppNavigation() {
         // == AUTH ROUTES ==
         composable(AppRoutes.LOGIN_SCREEN) {
             LoginScreen(
-                onLoginSuccess = { navController.navigate(AppRoutes.HOME_SCREEN) { popUpTo(AppRoutes.LOGIN_SCREEN) { inclusive = true } } },
+                onLoginSuccess = {
+                    navController.navigate(AppRoutes.HOME_SCREEN) {
+                        popUpTo(AppRoutes.LOGIN_SCREEN) { inclusive = true }
+                    }
+                },
                 onRegisterClick = { navController.navigate(AppRoutes.REGISTER_SCREEN) },
                 onForgotPasswordClick = { navController.navigate(AppRoutes.FORGOT_PASSWORD_SCREEN) },
-
-                // AKSI TOMBOL TAMU: Masuk ke Home tanpa Login
                 onGuestClick = {
-                    navController.navigate(AppRoutes.HOME_SCREEN) { popUpTo(AppRoutes.LOGIN_SCREEN) { inclusive = true } }
+                    navController.navigate(AppRoutes.HOME_SCREEN) {
+                        popUpTo(AppRoutes.LOGIN_SCREEN) { inclusive = true }
+                    }
                 }
             )
         }
-        composable(AppRoutes.REGISTER_SCREEN) { RegisterScreen(onRegisterSuccess = { navController.popBackStack() }, onBackClick = { navController.popBackStack() }) }
-        composable(AppRoutes.FORGOT_PASSWORD_SCREEN) { ForgotPasswordScreen(onBackClick = { navController.popBackStack() }) }
 
-        // == HOME SCREEN (PUBLIC - BISA DIAKSES TAMU) ==
-        // Tidak pakai LoginGuardScreen di sini
+        composable(AppRoutes.REGISTER_SCREEN) {
+            RegisterScreen(
+                onRegisterSuccess = { navController.popBackStack() },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(AppRoutes.FORGOT_PASSWORD_SCREEN) {
+            ForgotPasswordScreen(onBackClick = { navController.popBackStack() })
+        }
+
+        // == HOME SCREEN (Dengan Bottom Navbar) ==
         composable(AppRoutes.HOME_SCREEN) {
-            Scaffold(bottomBar = { FloatingBottomNavBar(navController) }) { paddingValues ->
+            Scaffold(
+                bottomBar = {
+                    StandardBottomNavBarWithLabel(navController = navController)
+                }
+            ) { paddingValues ->
                 HomeScreen(
-                    modifier = Modifier.padding(paddingValues),
-
-                    // PASANG PENJAGA DI SINI (Saat tombol diklik)
+                    modifier = Modifier
+                        .padding(paddingValues)
+                        .fillMaxSize(),
                     onSistemPakarClick = {
-                        checkAuthAndNavigate { navController.navigate(AppRoutes.SISTEM_PAKAR_SCREEN) }
+                        checkAuthAndNavigate {
+                            navController.navigate(AppRoutes.SISTEM_PAKAR_SCREEN)
+                        }
                     },
                     onArtikelClick = {
-                        checkAuthAndNavigate { navController.navigate(AppRoutes.ARTIKEL_SCREEN) }
+                        checkAuthAndNavigate {
+                            navController.navigate(AppRoutes.ARTIKEL_SCREEN)
+                        }
                     }
                 )
             }
         }
 
-        // == PROFILE (PRIVATE) ==
+        // == PROFILE (Dengan Bottom Navbar) ==
         composable(AppRoutes.PROFILE_SCREEN) {
-            LoginGuardScreen { // <-- Proteksi Halaman
-                Scaffold(bottomBar = { FloatingBottomNavBar(navController) }) { paddingValues ->
+            LoginGuardScreen {
+                Scaffold(
+                    bottomBar = {
+                        StandardBottomNavBarWithLabel(navController = navController)
+                    }
+                ) { paddingValues ->
                     ProfileScreen(
-                        modifier = Modifier.padding(paddingValues),
+                        modifier = Modifier
+                            .padding(paddingValues)
+                            .fillMaxSize(),
                         navController = navController,
-                        onLogoutClick = { auth.signOut(); navigateToLogin() }
+                        onLogoutClick = {
+                            auth.signOut()
+                            navigateToLogin()
+                        }
                     )
                 }
             }
         }
 
-        // == ARTIKEL (PRIVATE) ==
+        // == ARTIKEL (Dengan Bottom Navbar) ==
         composable(AppRoutes.ARTIKEL_SCREEN) {
             LoginGuardScreen {
-                Scaffold(bottomBar = { FloatingBottomNavBar(navController) }) { paddingValues ->
-                    ArtikelScreen(modifier = Modifier.padding(paddingValues), onBackClick = { navController.popBackStack() }, onArtikelDetailClick = { artikelId -> navController.navigate("${AppRoutes.ARTIKEL_DETAIL_ROUTE}/$artikelId") })
+                Scaffold(
+                    bottomBar = {
+                        StandardBottomNavBarWithLabel(navController = navController)
+                    }
+                ) { paddingValues ->
+                    ArtikelScreen(
+                        modifier = Modifier
+                            .padding(paddingValues)
+                            .fillMaxSize(),
+                        onBackClick = { navController.popBackStack() },
+                        onArtikelDetailClick = { id ->
+                            navController.navigate("${AppRoutes.ARTIKEL_DETAIL_ROUTE}/$id")
+                        }
+                    )
                 }
             }
         }
-        composable(route = AppRoutes.ARTIKEL_DETAIL_SCREEN, arguments = listOf(navArgument(AppRoutes.ARTIKEL_DETAIL_ARG_ID) { type = NavType.StringType })) { backStackEntry ->
+
+        // == ARTIKEL DETAIL (Tanpa Bottom Navbar) ==
+        composable(
+            route = AppRoutes.ARTIKEL_DETAIL_SCREEN,
+            arguments = listOf(
+                navArgument(AppRoutes.ARTIKEL_DETAIL_ARG_ID) {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
             LoginGuardScreen {
                 val artikelId = backStackEntry.arguments?.getString(AppRoutes.ARTIKEL_DETAIL_ARG_ID)
-                ReadArtikelScreen(itemId = artikelId, onBackClick = { navController.popBackStack() })
+                ReadArtikelScreen(
+                    itemId = artikelId,
+                    onBackClick = { navController.popBackStack() }
+                )
             }
         }
 
-        // ==========================================================
-        // == SISTEM PAKAR (PRIVATE & SHARED VM) ==
-        // ==========================================================
-
+        // == SISTEM PAKAR (Dengan Bottom Navbar) ==
         composable(AppRoutes.SISTEM_PAKAR_SCREEN) {
-            LoginGuardScreen { // <-- Proteksi Halaman
-                Scaffold(bottomBar = { FloatingBottomNavBar(navController) }) { paddingValues ->
+            LoginGuardScreen {
+                Scaffold(
+                    bottomBar = {
+                        StandardBottomNavBarWithLabel(navController = navController)
+                    }
+                ) { paddingValues ->
                     SistemPakarScreen(
-                        modifier = Modifier.padding(paddingValues),
+                        modifier = Modifier
+                            .padding(paddingValues)
+                            .fillMaxSize(),
                         onMulaiClick = { navController.navigate("sistem_pakar_flow") },
                         onBackClick = { navController.popBackStack() }
                     )
@@ -162,64 +213,68 @@ fun AppNavigation() {
             }
         }
 
-        // FLOW DIAGNOSA
-        navigation(startDestination = AppRoutes.GEJALA_SCREEN, route = "sistem_pakar_flow") {
-
-            // SCREEN 1: GEJALA
+        // == FLOW DIAGNOSA (Tanpa Navbar, Full Screen) ==
+        navigation(
+            startDestination = AppRoutes.GEJALA_SCREEN,
+            route = "sistem_pakar_flow"
+        ) {
             composable(AppRoutes.GEJALA_SCREEN) { backStackEntry ->
                 LoginGuardScreen {
-                    val parentEntry = remember(backStackEntry) { navController.getBackStackEntry("sistem_pakar_flow") }
-                    val sharedViewModel = hiltViewModel<SistemPakarViewModel>(parentEntry)
-
+                    val parentEntry = remember(backStackEntry) {
+                        navController.getBackStackEntry("sistem_pakar_flow")
+                    }
+                    val vm = hiltViewModel<SistemPakarViewModel>(parentEntry)
                     GejalaScreen(
-                        viewModel = sharedViewModel,
+                        viewModel = vm,
                         onBackClick = { navController.popBackStack() },
                         onLanjutClick = { navController.navigate(AppRoutes.KONDISI_SCREEN) }
                     )
                 }
             }
 
-            // SCREEN 2: KONDISI
             composable(AppRoutes.KONDISI_SCREEN) { backStackEntry ->
                 LoginGuardScreen {
-                    val parentEntry = remember(backStackEntry) { navController.getBackStackEntry("sistem_pakar_flow") }
-                    val sharedViewModel = hiltViewModel<SistemPakarViewModel>(parentEntry)
-
+                    val parentEntry = remember(backStackEntry) {
+                        navController.getBackStackEntry("sistem_pakar_flow")
+                    }
+                    val vm = hiltViewModel<SistemPakarViewModel>(parentEntry)
                     KondisiScreen(
-                        viewModel = sharedViewModel,
+                        viewModel = vm,
                         onBackClick = {
-                            sharedViewModel.clearDiagnosa()
+                            vm.clearDiagnosa()
                             navController.popBackStack()
                         },
                         onLanjutClick = {
-                            val hasilId = "result_id"
-                            navController.navigate("${AppRoutes.PAKAR_DETAIL_ROUTE}/$hasilId")
+                            navController.navigate("${AppRoutes.PAKAR_DETAIL_ROUTE}/result")
                         }
                     )
                 }
             }
 
-            // SCREEN 3: DETAIL (ARTIKEL + SAVE HISTORY)
             composable(
                 route = AppRoutes.PAKAR_DETAIL_SCREEN,
-                arguments = listOf(navArgument(AppRoutes.PAKAR_DETAIL_ARG_ID) { type = NavType.StringType })
+                arguments = listOf(
+                    navArgument(AppRoutes.PAKAR_DETAIL_ARG_ID) {
+                        type = NavType.StringType
+                    }
+                )
             ) { backStackEntry ->
                 LoginGuardScreen {
-                    val parentEntry = remember(backStackEntry) { navController.getBackStackEntry("sistem_pakar_flow") }
-                    val sharedViewModel = hiltViewModel<SistemPakarViewModel>(parentEntry)
-                    val pakarId = backStackEntry.arguments?.getString(AppRoutes.PAKAR_DETAIL_ARG_ID)
-
+                    val parentEntry = remember(backStackEntry) {
+                        navController.getBackStackEntry("sistem_pakar_flow")
+                    }
+                    val vm = hiltViewModel<SistemPakarViewModel>(parentEntry)
+                    val id = backStackEntry.arguments?.getString(AppRoutes.PAKAR_DETAIL_ARG_ID)
                     DetailScreen(
-                        itemId = pakarId,
-                        viewModel = sharedViewModel,
+                        itemId = id,
+                        viewModel = vm,
                         onBackClick = { navController.popBackStack() },
-
-                        // --- LOGIKA SIMPAN HISTORY (SESUAI PERMINTAAN) ---
                         onSelesaiClick = {
-                            // 1. Simpan ke Riwayat
-                            sharedViewModel.saveResultToHistory()
-                            // 2. Navigasi keluar
-                            navController.popBackStack(route = AppRoutes.SISTEM_PAKAR_SCREEN, inclusive = false)
+                            vm.saveResultToHistory()
+                            navController.popBackStack(
+                                route = AppRoutes.SISTEM_PAKAR_SCREEN,
+                                inclusive = false
+                            )
                         }
                     )
                 }

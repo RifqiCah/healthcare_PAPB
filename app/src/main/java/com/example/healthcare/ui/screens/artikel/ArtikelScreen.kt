@@ -38,7 +38,7 @@ import kotlinx.coroutines.delay
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ArtikelScreen(
-    modifier: Modifier = Modifier, // Note: Pastikan parent tidak memberikan padding top di sini
+    modifier: Modifier = Modifier,
     onBackClick: () -> Unit,
     onArtikelDetailClick: (String) -> Unit,
     viewModel: ArticleViewModel = hiltViewModel()
@@ -59,18 +59,27 @@ fun ArtikelScreen(
         }
     }
 
-    // Gunakan Box agar layout fleksibel
-    Box(modifier = modifier.fillMaxSize()) {
-
+    // Box dengan background gradient untuk seluruh halaman
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color.Transparent, // Atas transparan biar gambar asli kelihatan
+                        MaterialTheme.colorScheme.primaryContainer, // Tengah Cyan
+                        MaterialTheme.colorScheme.surface // Bawah
+                    )
+                )
+            )
+    ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
-
             /** --- 1. HERO SECTION (Full Immersive) --- **/
             item {
-                // Bagian ini yang bikin gambar naik ke atas status bar
                 AnimatedHeroSection()
                 Spacer(modifier = Modifier.height(24.dp))
             }
@@ -110,7 +119,12 @@ fun ArtikelScreen(
             /** --- 4. Content Logic --- **/
             if (uiState.isLoading && uiState.articles.isEmpty()) {
                 item {
-                    Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
                         CircularProgressIndicator()
                     }
                 }
@@ -148,7 +162,9 @@ fun ArtikelScreen(
                     item {
                         Text(
                             text = "Tidak ada artikel ditemukan.",
-                            modifier = Modifier.fillMaxWidth().padding(20.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp),
                             textAlign = TextAlign.Center,
                             color = MaterialTheme.colorScheme.outline
                         )
@@ -192,7 +208,7 @@ fun ArtikelScreen(
     }
 }
 
-/** --- ANIMATED HERO SECTION (VERSI IMMERSIVE TRANSPARAN) --- **/
+/** --- ANIMATED HERO SECTION (VERSI IMMERSIVE TANPA OVERLAY) --- **/
 @Composable
 fun AnimatedHeroSection() {
     val infiniteTransition = rememberInfiniteTransition(label = "hero")
@@ -209,7 +225,7 @@ fun AnimatedHeroSection() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(300.dp) // Tinggi dibuat cukup besar
+            .height(300.dp)
             .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
     ) {
         // 1. GAMBAR BACKGROUND (Memenuhi Box)
@@ -222,32 +238,18 @@ fun AnimatedHeroSection() {
             contentScale = ContentScale.Crop
         )
 
-        // 2. GRADIENT OVERLAY (Agar status bar putih tetap terbaca)
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Black.copy(alpha = 0.6f), // Gelap di atas (Status Bar area)
-                            Color.Black.copy(alpha = 0.2f), // Tengah agak terang
-                            Color.Black.copy(alpha = 0.8f)  // Bawah gelap lagi
-                        )
-                    )
-                )
-        )
+        // 2. Tidak ada overlay gradient lagi - gradient sudah di background halaman
 
         // 3. TEKS KONTEN
-        // Menggunakan statusBarsPadding() agar teks turun otomatis di bawah jam/baterai
         Column(
             modifier = Modifier
-                .align(Alignment.Center) // Posisikan di tengah
-                .statusBarsPadding()     // PENTING: Memberi jarak aman dari atas
+                .align(Alignment.Center)
+                .statusBarsPadding()
                 .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "📚 Blog Kesehatan",
+                text = "Artikel Kesehatan",
                 color = Color.White,
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.Bold,
@@ -266,18 +268,26 @@ fun AnimatedHeroSection() {
     }
 }
 
-// --- KOMPONEN PENDUKUNG LAINNYA (Error, SearchBar, Chip, Card) TETAP SAMA ---
-// (Pastikan fungsi-fungsi di bawah ini tetap ada di file kamu)
-
 @Composable
 fun ErrorSection(message: String, onRetry: () -> Unit) {
     Column(
-        modifier = Modifier.fillMaxWidth().padding(20.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(48.dp))
+        Icon(
+            Icons.Default.Warning,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.error,
+            modifier = Modifier.size(48.dp)
+        )
         Spacer(modifier = Modifier.height(8.dp))
-        Text(text = message, textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.error)
+        Text(
+            text = message,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.error
+        )
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = onRetry) {
             Text("Coba Lagi")
@@ -358,20 +368,14 @@ fun CategoryChip(
         onClick = onClick,
         modifier = Modifier.scale(animatedScale),
         shape = RoundedCornerShape(20.dp),
-        color = if (isSelected)
-            MaterialTheme.colorScheme.primary
-        else
-            MaterialTheme.colorScheme.surfaceVariant,
+        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
         tonalElevation = if (isSelected) 4.dp else 0.dp
     ) {
         Text(
             text = text,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
             style = MaterialTheme.typography.labelLarge,
-            color = if (isSelected)
-                MaterialTheme.colorScheme.onPrimary
-            else
-                MaterialTheme.colorScheme.onSurfaceVariant,
+            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
         )
     }
@@ -393,11 +397,10 @@ fun AnimatedArticleCard(
 
     AnimatedVisibility(
         visible = isVisible,
-        enter = fadeIn(animationSpec = tween(400)) +
-                slideInVertically(
-                    animationSpec = tween(400),
-                    initialOffsetY = { it / 2 }
-                )
+        enter = fadeIn(animationSpec = tween(400)) + slideInVertically(
+            animationSpec = tween(400),
+            initialOffsetY = { it / 2 }
+        )
     ) {
         var isPressed by remember { mutableStateOf(false) }
         val scale by animateFloatAsState(

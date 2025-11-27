@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -47,18 +48,22 @@ fun HomeScreen(
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFFE3F2FD), // Light blue
-                        Color(0xFFBBDEFB), // Slightly darker blue
-                        Color(0xFF90CAF9)  // Medium blue
+                        Color.Transparent, // Atas transparan biar gambar asli kelihatan
+                        MaterialTheme.colorScheme.primaryContainer, // Tengah Cyan
+                        MaterialTheme.colorScheme.surface //
                     )
                 )
             )
     ) {
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
+
             horizontalAlignment = Alignment.CenterHorizontally
+
         ) {
-            // Hero Section (Full Immersive)
+            // Hero Section
             AnimatedHeroSection()
 
             // Content Section
@@ -96,9 +101,9 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = Icons.Default.LocalHospital,
+                            imageVector = Icons.Default.MedicalServices, // Ganti icon biar relevan
                             contentDescription = null,
-                            tint = Color(0xFF0D47A1), // Deep blue
+                            tint = MaterialTheme.colorScheme.primary, // Cyan
                             modifier = Modifier.size(24.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
@@ -107,7 +112,7 @@ fun HomeScreen(
                             style = MaterialTheme.typography.titleLarge.copy(
                                 fontWeight = FontWeight.Bold
                             ),
-                            color = Color(0xFF1A237E) // Deep blue
+                            color = MaterialTheme.colorScheme.onBackground
                         )
                     }
                 }
@@ -116,19 +121,19 @@ fun HomeScreen(
                 val services = listOf(
                     ServiceData(
                         "Sistem Pakar",
-                        "Diagnosa Penyakit",
+                        "Diagnosa Penyakit Anda di sini",
                         Icons.Default.Psychology,
                         onSistemPakarClick
                     ),
                     ServiceData(
-                        "Blog Kesehatan",
                         "Artikel Kesehatan",
-                        Icons.Default.Article,
+                        "Informasi Terpercaya untuk Hidup Lebih Sehat",
+                        Icons.AutoMirrored.Filled.Article,
                         onArtikelClick
                     ),
                     ServiceData(
                         "Hasil Analisa",
-                        "Jurnal Sistem Pakar",
+                        "Lihat Riwayat Analisa Anda",
                         Icons.Default.Assessment,
                         {}
                     )
@@ -157,16 +162,14 @@ fun HomeScreen(
                             subtitle = service.subtitle,
                             icon = service.icon,
                             onClick = service.onClick,
-                            iconColor = when (index) {
-                                0 -> Color(0xFF607D8B)
-                                1 -> Color(0xFF607D8B)
-                                else -> Color(0xFF64B5F6)
-                            }
+                            // Warna Ikon bervariasi tapi tetap dalam tema
+                            iconColor = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                // SPACER PENTING UNTUK FLOATING NAVBAR
+                Spacer(modifier = Modifier.height(20.dp))
             }
         }
     }
@@ -208,30 +211,30 @@ fun AnimatedHeroSection() {
             contentScale = ContentScale.Crop
         )
 
-        // Gradient Overlay
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Black.copy(alpha = 0.5f),
-                            Color.Black.copy(alpha = 0.2f),
-                            Color.Black.copy(alpha = 0.7f)
-                        )
-                    )
-                )
-        )
+        // Gradient Overlay (Lebih ke Biru Tua/Cyan biar teks putih kebaca)
+//        Box(
+//            modifier = Modifier
+//                .fillMaxSize()
+//                .background(
+//                    Brush.verticalGradient(
+//                        colors = listOf(
+//                            Color.Transparent, // Atas transparan biar gambar asli kelihatan
+//                            MaterialTheme.colorScheme.primary.copy(alpha = 0.3f), // Tengah Cyan
+//                            MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f) // Bawah Biru Tua
+//                        )
+//                    )
+//                )
+//        )
 
         // Content
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         )
         {
-            // Pulsing Heart Icon
             PulsingHealthIcon()
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -276,12 +279,7 @@ fun PulsingHealthIcon() {
             .size(64.dp)
             .scale(scale)
             .background(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        Color.White.copy(alpha = 0.3f),
-                        Color.White.copy(alpha = 0.1f)
-                    )
-                ),
+                color = Color.White.copy(alpha = 0.2f),
                 shape = CircleShape
             ),
         contentAlignment = Alignment.Center
@@ -297,72 +295,57 @@ fun PulsingHealthIcon() {
 
 @Composable
 fun WelcomeCard() {
-    Surface(
+    // Card Putih Bersih di atas background abu muda
+    Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        color = Color.White.copy(alpha = 0.25f), // Glass effect
-        tonalElevation = 0.dp
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background), //putih
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        // Glassmorphism effect
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = 0.2f),
-                            Color.White.copy(alpha = 0.1f)
-                        )
-                    )
-                )
+        Column(
+            modifier = Modifier.padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+            Text(
+                text = "SELAMAT DATANG",
+                style = MaterialTheme.typography.labelLarge.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 2.sp
+                ),
+                color = MaterialTheme.colorScheme.secondary // Biru Tua
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = "DI HEALTHCARE",
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    fontWeight = FontWeight.Bold
+                ),
+                color = MaterialTheme.colorScheme.primary // Cyan
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Button(
+                onClick = { /* TODO: Navigasi */ },
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.height(48.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary, // Tombol Cyan
+                    contentColor = MaterialTheme.colorScheme.onPrimary // Teks Putih
+                )
             ) {
-                Text(
-                    text = "SELAMAT DATANG",
-                    style = MaterialTheme.typography.labelLarge.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        letterSpacing = 2.sp
-                    ),
-                    color = Color(0xFF1565C0) // Darker blue for contrast
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
                 )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "DI HEALTHCARE",
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = Color(0xFF0D47A1) // Deep blue
+                    "Tentang Kita",
+                    style = MaterialTheme.typography.labelLarge
                 )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                FilledTonalButton(
-                    onClick = { /* TODO: Navigasi ke 'Tentang Kita' */ },
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.height(48.dp),
-                    colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = Color(0xFF1976D2).copy(alpha = 0.9f),
-                        contentColor = Color.White
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                        tint = Color.White
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        "Tentang Kita",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = Color.White
-                    )
-                }
             }
         }
     }
@@ -384,7 +367,7 @@ fun ModernServiceCard(
         label = "scale"
     )
 
-    Surface(
+    Card(
         onClick = {
             isPressed = true
             onClick()
@@ -394,73 +377,61 @@ fun ModernServiceCard(
             .padding(vertical = 8.dp)
             .scale(scale),
         shape = RoundedCornerShape(20.dp),
-        color = Color.White.copy(alpha = 0.3f), // Glass effect
-        tonalElevation = 0.dp
+        // Gunakan Surface/Putih untuk kartu agar terlihat menonjol
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Box(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    Brush.horizontalGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = 0.25f),
-                            Color.White.copy(alpha = 0.15f)
-                        )
-                    )
-                )
+                .padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp),
-                verticalAlignment = Alignment.CenterVertically
+            // Icon Container
+            Surface(
+                modifier = Modifier.size(56.dp),
+                shape = RoundedCornerShape(14.dp),
+                color = iconColor.copy(alpha = 0.1f) // Warna background ikon pudar
             ) {
-                // Icon Container
-                Surface(
-                    modifier = Modifier.size(56.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    color = iconColor.copy(alpha = 0.2f)
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = null,
-                            tint = iconColor,
-                            modifier = Modifier.size(28.dp)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.width(16.dp))
-
-                // Text Content
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = Color(0xFF1A237E) // Deep blue
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color(0xFF424242).copy(alpha = 0.8f)
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = iconColor, // Warna ikon asli
+                        modifier = Modifier.size(28.dp)
                     )
                 }
+            }
 
-                // Arrow Icon
-                Icon(
-                    imageVector = Icons.Default.ArrowForward,
-                    contentDescription = null,
-                    tint = Color(0xFF607D8B).copy(alpha = 0.6f),
-                    modifier = Modifier.size(24.dp)
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // Text Content
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+
+            // Arrow Icon
+            Icon(
+                imageVector = Icons.Default.ArrowForward,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                modifier = Modifier.size(24.dp)
+            )
         }
     }
 

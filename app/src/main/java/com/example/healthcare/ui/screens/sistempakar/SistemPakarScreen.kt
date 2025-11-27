@@ -1,31 +1,34 @@
 package com.example.healthcare.ui.screens.sistempakar
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect // Import DisposableEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalLifecycleOwner // Import Lifecycle
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle // Import Lifecycle
-import androidx.lifecycle.LifecycleEventObserver // Import Lifecycle
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.example.healthcare.R
 import com.example.healthcare.viewmodel.SistemPakarViewModel
 
@@ -40,12 +43,12 @@ fun SistemPakarScreen(
     val uiState by viewModel.uiState.collectAsState()
     val historyList = uiState.historyList
 
-    // --- 1. FITUR AUTO REFRESH (Agar data muncul saat kembali dari detail) ---
+    // --- AUTO REFRESH ---
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                viewModel.fetchHistory() // Refresh data setiap layar muncul
+                viewModel.fetchHistory()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -53,135 +56,238 @@ fun SistemPakarScreen(
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
-    // -----------------------------------------------------------------------
 
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 16.dp)
-    ) {
-        // --- ITEM 1: HEADER IMAGE ---
-        item {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-                    .padding(16.dp)
-                    .clip(RoundedCornerShape(16.dp))
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.bg_pakar),
-                    contentDescription = "Header",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
+    // Box dengan background gradient untuk seluruh halaman
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color.Transparent,
+                        MaterialTheme.colorScheme.primaryContainer,
+                        MaterialTheme.colorScheme.surface
+                    )
                 )
-                Box(modifier = Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.4f)))
+            )
+    ) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(bottom = 22.dp)
+        ) {
+            /** --- 1. HERO SECTION (Immersive) --- **/
+            item {
+                AnimatedHeroSectionPakar()
+                Spacer(modifier = Modifier.height(24.dp))
+            }
 
-                Column(
-                    modifier = Modifier.fillMaxSize().padding(16.dp),
-                    verticalArrangement = Arrangement.Top,
-                    horizontalAlignment = Alignment.Start
+            /** --- 2. INFO PENGECEKAN CARD --- **/
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    )
                 ) {
-                    Text("SISTEM PAKAR", style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold, color = Color.White))
-                    Text("DIAGNOSA PENYAKIT", style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold, color = Color.White))
-                }
-            }
-        }
-
-        // --- ITEM 2: INFO PENGECEKAN ---
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text("Pengecekan Gejala Kesehatan", style = MaterialTheme.typography.headlineMedium.copy(fontSize = 20.sp, fontWeight = FontWeight.Bold), textAlign = TextAlign.Center)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    HorizontalDivider(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), thickness = 2.dp, color = MaterialTheme.colorScheme.primary)
-                    Text("Dapatkan informasi awal tentang kondisi kesehatan\nAnda berdasarkan gejala yang dialami", style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp), textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.primary)
-                }
-            }
-        }
-
-        item { Spacer(modifier = Modifier.height(16.dp)) }
-
-        // --- ITEM 3: CARA PENGGUNAAN ---
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Cara Menggunakan:", style = MaterialTheme.typography.titleMedium.copy(fontSize = 18.sp, fontWeight = FontWeight.Bold))
-                    Spacer(modifier = Modifier.height(12.dp))
-                    val steps = listOf("Pastikan Anda telah masuk ke sistem.", "Tekan tombol Mulai di bawah.", "Masukkan umur dan gejala.", "Lihat hasil diagnosa & artikel.")
-                    steps.forEachIndexed { index, step ->
-                        Text("${index + 1}. $step", style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp), modifier = Modifier.padding(vertical = 4.dp))
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = onMulaiClick, modifier = Modifier.fillMaxWidth()) { Text("Mulai Pengecekan") }
-                }
-            }
-        }
-
-        item { Spacer(modifier = Modifier.height(16.dp)) }
-
-        // --- ITEM 4: HEADER RIWAYAT ---
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
-            ) {
-                Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-                    Text("Riwayat Pengecekan", style = MaterialTheme.typography.titleLarge.copy(fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary))
-                    Spacer(modifier = Modifier.height(12.dp))
-                    HorizontalDivider(thickness = 1.dp, color = Color(0xFFE0E0E0))
-
-                    // Table Header
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // --- 2. UBAH WEIGHT AGAR LEBIH PROPORSIONAL ---
-                        Text("Tanggal", style = HeaderStyle(), modifier = Modifier.weight(1.1f)) // Sedikit dikecilkan
-                        Text("Waktu", style = HeaderStyle(), modifier = Modifier.weight(0.6f))   // Dikecilkan banyak (waktu cuma butuh dikit)
-                        Text("Hasil", style = HeaderStyle(), modifier = Modifier.weight(2.0f))   // Dibesarkan (Paling penting)
-                    }
-                    HorizontalDivider(thickness = 1.dp, color = Color(0xFFE0E0E0))
-
-                    if (historyList.isEmpty()) {
-                        Box(
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
-                            contentAlignment = Alignment.Center
+                        Icon(
+                            imageVector = Icons.Default.LocalHospital,
+                            contentDescription = null,
+                            modifier = Modifier.size(48.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "Pengecekan Gejala Kesehatan",
+                            style = MaterialTheme.typography.headlineSmall.copy(
+                                fontWeight = FontWeight.Bold
+                            ),
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        HorizontalDivider(
+                            modifier = Modifier
+                                .fillMaxWidth(0.3f)
+                                .padding(vertical = 8.dp),
+                            thickness = 3.dp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "Dapatkan informasi awal tentang kondisi kesehatan Anda berdasarkan gejala yang dialami",
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = onMulaiClick,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp),
+                            shape = RoundedCornerShape(12.dp)
                         ) {
-                            Text("Belum ada riwayat pemeriksaan.", style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, color = Color.Gray))
+                            Icon(
+                                imageVector = Icons.Default.PlayArrow,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Mulai Pengecekan",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold
+                                )
+                            )
                         }
-                    } else {
-                        Column {
-                            historyList.forEach { item ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 12.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    // Ganti ke Top agar teks panjang terlihat rapi mulai dari atas
-                                    verticalAlignment = Alignment.Top
-                                ) {
-                                    // --- 3. TERAPKAN WEIGHT & HAPUS MAXLINES ---
-                                    Text(item.tanggal, style = ItemStyle(), modifier = Modifier.weight(1.1f))
-                                    Text(item.waktu, style = ItemStyle(), modifier = Modifier.weight(0.6f))
+                    }
+                }
+                Spacer(modifier = Modifier.height(20.dp))
+            }
 
+
+            /** --- 4. RIWAYAT PENGECEKAN --- **/
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    )
+                ) {
+                    Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.History,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Riwayat Pengecekan",
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    fontWeight = FontWeight.Bold
+                                )
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        HorizontalDivider(
+                            thickness = 1.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant
+                        )
+
+                        // Table Header
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                "Tanggal",
+                                style = MaterialTheme.typography.labelLarge.copy(
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                modifier = Modifier.weight(1.1f)
+                            )
+                            Text(
+                                "Waktu",
+                                style = MaterialTheme.typography.labelLarge.copy(
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                modifier = Modifier.weight(1.0f)
+                            )
+                            Text(
+                                "Hasil",
+                                style = MaterialTheme.typography.labelLarge.copy(
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                modifier = Modifier.weight(1.8f)
+                            )
+                        }
+                        HorizontalDivider(
+                            thickness = 1.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant
+                        )
+
+                        if (historyList.isEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 48.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Icon(
+                                        imageVector = Icons.Default.SearchOff,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(64.dp),
+                                        tint = MaterialTheme.colorScheme.outlineVariant
+                                    )
+                                    Spacer(modifier = Modifier.height(12.dp))
                                     Text(
-                                        text = "${item.penyakit} (${item.persentase}%)",
-                                        style = ItemStyle().copy(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary),
-                                        modifier = Modifier.weight(2.0f),
-                                        // HAPUS maxLines dan overflow agar teks turun ke bawah (wrapping)
+                                        text = "Belum ada riwayat pemeriksaan",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
-                                HorizontalDivider(thickness = 0.5.dp, color = Color.LightGray)
+                            }
+                        } else {
+                            Column {
+                                historyList.forEach { item ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 12.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.Top
+                                    ) {
+                                        Text(
+                                            text = item.tanggal,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            modifier = Modifier.weight(1.1f)
+                                        )
+                                        Text(
+                                            text = item.waktu,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            modifier = Modifier.weight(0.6f)
+                                        )
+                                        Surface(
+                                            modifier = Modifier.weight(2.0f),
+                                            shape = RoundedCornerShape(8.dp),
+                                            color = MaterialTheme.colorScheme.primaryContainer
+                                        ) {
+                                            Text(
+                                                text = "${item.penyakit}\n${item.persentase}%",
+                                                style = MaterialTheme.typography.bodySmall.copy(
+                                                    fontWeight = FontWeight.Bold
+                                                ),
+                                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                                modifier = Modifier.padding(8.dp)
+                                            )
+                                        }
+                                    }
+                                    if (item != historyList.last()) {
+                                        HorizontalDivider(
+                                            thickness = 0.5.dp,
+                                            color = MaterialTheme.colorScheme.outlineVariant.copy(
+                                                alpha = 0.5f
+                                            )
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
@@ -191,8 +297,84 @@ fun SistemPakarScreen(
     }
 }
 
+/** --- ANIMATED HERO SECTION --- **/
 @Composable
-fun HeaderStyle() = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold, fontSize = 13.sp, textAlign = TextAlign.Start)
+fun AnimatedHeroSectionPakar() {
+    val infiniteTransition = rememberInfiniteTransition(label = "hero")
+    val scale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.05f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(3000, easing = EaseInOutCubic),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "scale"
+    )
 
-@Composable
-fun ItemStyle() = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp, textAlign = TextAlign.Start)
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(280.dp)
+            .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
+    ) {
+        // Gambar Background
+        Image(
+            painter = painterResource(id = R.drawable.bg_pakar),
+            contentDescription = "Header Sistem Pakar",
+            modifier = Modifier
+                .fillMaxSize()
+                .scale(scale),
+            contentScale = ContentScale.Crop
+        )
+
+        // Gradient Overlay (Agar teks tetap terbaca)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Black.copy(alpha = 0.6f),
+                            Color.Black.copy(alpha = 0.3f)
+                        )
+                    )
+                )
+        )
+
+        // Konten Teks
+        Column(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .statusBarsPadding()
+                .padding(horizontal = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = Icons.Default.MedicalServices,
+                contentDescription = null,
+                modifier = Modifier.size(56.dp),
+                tint = Color.White
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = "SISTEM PAKAR",
+                color = Color.White,
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.5.sp
+                ),
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "DIAGNOSA PENYAKIT",
+                color = Color.White.copy(alpha = 0.95f),
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 1.sp
+                ),
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}

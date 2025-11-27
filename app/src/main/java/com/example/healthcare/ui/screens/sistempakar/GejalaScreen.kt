@@ -1,13 +1,11 @@
 package com.example.healthcare.ui.screens.sistempakar
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
@@ -17,14 +15,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
-
 import com.example.healthcare.viewmodel.SistemPakarViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GejalaScreen(
     onBackClick: () -> Unit,
@@ -32,204 +25,128 @@ fun GejalaScreen(
     viewModel: SistemPakarViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
-
-    // --- STATE UNTUK SEARCH ---
     var searchQuery by remember { mutableStateOf("") }
 
-    // --- AMBIL DATA DARI VIEWMODEL (API) ---
     val serverSymptoms = uiState.availableSymptoms
 
-    // --- LOGIKA FILTER PINTAR ---
     val displayedGejala = remember(searchQuery, serverSymptoms, uiState.selectedGejala) {
         if (searchQuery.isBlank()) {
-            // KONDISI 1: Search Kosong -> Tampilkan 5 Gejala Teratas + Gejala yang SEDANG DIPILIH
             val top5 = serverSymptoms.take(5)
             val selectedButHidden = serverSymptoms.filter { uiState.selectedGejala.contains(it.id) }
-
-            // Gabungkan dan hilangkan duplikat
             (top5 + selectedButHidden).distinctBy { it.id }
         } else {
-            // KONDISI 2: Ada ketikan -> Cari yang cocok (Pakai Label Indonesia)
             serverSymptoms.filter {
                 it.label.contains(searchQuery, ignoreCase = true)
             }
         }
     }
 
-    // Efek saat diagnosa sukses -> Pindah halaman
     LaunchedEffect(uiState.hasilDiagnosa) {
         if (uiState.hasilDiagnosa != null) {
             onLanjutClick()
         }
     }
 
-    Scaffold(
-        bottomBar = {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shadowElevation = 8.dp
-            ) {
-                Row(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    OutlinedButton(
-                        onClick = onBackClick,
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Kembali")
-                    }
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Button(
-                        onClick = { viewModel.predict() },
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.weight(1f),
-                        enabled = uiState.umur.isNotEmpty() && uiState.gender.isNotEmpty() && uiState.selectedGejala.isNotEmpty() && !uiState.isLoading
-                    ) {
-                        if (uiState.isLoading) {
-                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
-                        } else {
-                            Text("Analisa")
-                        }
-                    }
-                }
-            }
-        }
-    ) { paddingValues ->
+    Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(Color(0xFFF5F5F5)),
-            contentPadding = PaddingValues(16.dp)
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // --- BAGIAN ATAS (Info User) ---
+            // 1. HERO SECTION
             item {
-                // Pastikan fungsi-fungsi ini ada di Components.kt atau file lain
-                 HeaderSection()
-                 HeroSection()
-                 StepperSection(activeStep = 1)
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Data Diri", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        OutlinedTextField(
-                            value = uiState.umur,
-                            onValueChange = { viewModel.onUmurChange(it) },
-                            label = { Text("Umur (Tahun)") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            shape = RoundedCornerShape(12.dp)
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Text("Jenis Kelamin", style = MaterialTheme.typography.bodyMedium)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row(modifier = Modifier.fillMaxWidth()) {
-                            GenderSelectionCard(
-                                text = "Laki-laki",
-                                isSelected = uiState.gender == "Laki-laki",
-                                onClick = { viewModel.onGenderChange("Laki-laki") },
-                                modifier = Modifier.weight(1f)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            GenderSelectionCard(
-                                text = "Perempuan",
-                                isSelected = uiState.gender == "Perempuan",
-                                onClick = { viewModel.onGenderChange("Perempuan") },
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                    }
-                }
-
+                HeroSection()
                 Spacer(modifier = Modifier.height(24.dp))
+            }
+
+            // 2. STEPPER SECTION
+            item {
+                StepperSection(activeStep = 1)
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+
+            // --- 3. INPUT DATA DIRI DIHAPUS ---
+
+            // 4. HEADER PILIH GEJALA
+            item {
                 Text(
                     text = "Pilih Gejala",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-            }
-
-            // --- SEARCH BAR ---
-            item {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = { Text("Cari gejala (misal: demam, nyeri)") },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                    trailingIcon = {
-                        if (searchQuery.isNotEmpty()) {
-                            IconButton(onClick = { searchQuery = "" }) {
-                                Icon(Icons.Default.Clear, contentDescription = "Clear")
-                            }
-                        }
-                    },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 16.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White,
-                        disabledContainerColor = Color.White,
-                        unfocusedBorderColor = Color.LightGray,
-                        focusedBorderColor = MaterialTheme.colorScheme.primary
-                    )
+                        .padding(horizontal = 20.dp, vertical = 8.dp)
                 )
-
-                if (searchQuery.isBlank()) {
-                    Text(
-                        text = "Menampilkan 5 gejala teratas. Ketik untuk mencari lainnya.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                } else if (displayedGejala.isEmpty()) {
-                    Text(
-                        text = "Gejala tidak ditemukan.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                }
-
-                if (uiState.error != null) {
-                    Text(
-                        text = uiState.error ?: "",
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
-                }
             }
 
-            // --- LIST GEJALA (DINAMIS DARI API) ---
+            // 5. SEARCH BAR
+            item {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)
+                ) {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        placeholder = { Text("Cari gejala (misal: demam, nyeri)") },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                        trailingIcon = {
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(onClick = { searchQuery = "" }) {
+                                    Icon(Icons.Default.Clear, contentDescription = "Clear")
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            disabledContainerColor = Color.White,
+                            unfocusedBorderColor = Color.LightGray,
+                            focusedBorderColor = Color(0xFF00BCD4),
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    if (searchQuery.isBlank()) {
+                        Text(
+                            text = "Menampilkan 5 gejala teratas. Ketik untuk mencari lainnya.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray
+                        )
+                    } else if (displayedGejala.isEmpty()) {
+                        Text(
+                            text = "Gejala tidak ditemukan.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+
+                    if (uiState.error != null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = uiState.error ?: "",
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            // 6. LIST GEJALA
             items(displayedGejala) { symptomItem ->
                 val isSelected = uiState.selectedGejala.contains(symptomItem.id)
 
                 Card(
                     shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.White
+                        containerColor = if (isSelected) Color(0xFF00BCD4) else Color.White
                     ),
-                    border = if (isSelected) BorderStroke(1.dp, MaterialTheme.colorScheme.primary) else null,
+                    border = if (isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else BorderStroke(1.dp, Color(0xFFE0E0E0)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 4.dp else 1.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp)
+                        .padding(horizontal = 20.dp, vertical = 4.dp)
                         .clickable { viewModel.toggleGejala(symptomItem.id) }
                 ) {
                     Row(
@@ -241,42 +158,59 @@ fun GejalaScreen(
                             onCheckedChange = { viewModel.toggleGejala(symptomItem.id) }
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-
-                        // TAMPILKAN LABEL INDONESIA
                         Text(
                             text = symptomItem.label,
                             style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                             modifier = Modifier.weight(1f)
                         )
                     }
                 }
             }
 
-            item { Spacer(modifier = Modifier.height(80.dp)) }
-        }
-    }
-}
+            // 7. TOMBOL NAVIGASI
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+                Surface(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+                    shadowElevation = 4.dp,
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color.White
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        OutlinedButton(
+                            onClick = onBackClick,
+                            shape = RoundedCornerShape(50),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Kembali", color = Color(0xFF00BCD4))
+                        }
 
-// --- KOMPONEN LOKAL ---
-@Composable
-fun GenderSelectionCard(
-    text: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val backgroundColor = if (isSelected) MaterialTheme.colorScheme.primary else Color.White
-    val contentColor = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface
-    val borderColor = if (isSelected) MaterialTheme.colorScheme.primary else Color.LightGray
+                        Spacer(modifier = Modifier.width(16.dp))
 
-    Card(
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = backgroundColor),
-        border = BorderStroke(1.dp, borderColor),
-        modifier = modifier.clickable { onClick() }
-    ) {
-        Box(modifier = Modifier.padding(vertical = 12.dp).fillMaxWidth(), contentAlignment = Alignment.Center) {
-            Text(text = text, style = MaterialTheme.typography.bodyMedium, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal, color = contentColor)
+                        // --- PERBAIKAN DI SINI ---
+                        Button(
+                            onClick = { viewModel.predict() },
+                            shape = RoundedCornerShape(50),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00BCD4)),
+                            modifier = Modifier.weight(1f),
+                            // SYARAT BUTTON ENABLED DIUBAH:
+                            // Hanya cek apakah gejala sudah dipilih dan tidak loading
+                            enabled = uiState.selectedGejala.isNotEmpty() && !uiState.isLoading
+                        ) {
+                            if (uiState.isLoading) {
+                                CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                            } else {
+                                Text("Analisa", color = Color.White)
+                            }
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(100.dp))
+            }
         }
     }
 }

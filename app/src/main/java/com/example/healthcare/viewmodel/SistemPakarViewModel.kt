@@ -48,8 +48,7 @@ class SistemPakarViewModel @Inject constructor(
         fetchHistory()
     }
 
-    // --- PERBAIKAN DI SINI ---
-    // HAPUS kata 'private' agar bisa dipanggil dari SistemPakarScreen
+    // Fungsi fetchHistory (Public agar bisa dipanggil dari UI untuk Auto-Refresh)
     fun fetchHistory() {
         viewModelScope.launch {
             val history = repository.getHistory()
@@ -69,6 +68,7 @@ class SistemPakarViewModel @Inject constructor(
         }
     }
 
+    // Input handlers (Tetap dibiarkan ada, tidak masalah meskipun tidak dipakai di UI)
     fun onUmurChange(newUmur: String) {
         if (newUmur.all { it.isDigit() }) {
             _uiState.update { it.copy(umur = newUmur) }
@@ -91,13 +91,12 @@ class SistemPakarViewModel @Inject constructor(
         }
     }
 
+    // --- FUNGSI PREDIKSI (SUDAH DIPERBAIKI) ---
     fun predict() {
         val currentState = _uiState.value
 
-        if (currentState.umur.isEmpty() || currentState.gender.isEmpty()) {
-            _uiState.update { it.copy(error = "Mohon isi umur dan jenis kelamin.") }
-            return
-        }
+        // VALIDASI UMUR & GENDER SUDAH DIHAPUS
+        // Sekarang hanya cek apakah gejala sudah dipilih
         if (currentState.selectedGejala.isEmpty()) {
             _uiState.update { it.copy(error = "Pilih minimal satu gejala!") }
             return
