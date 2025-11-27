@@ -70,23 +70,18 @@ fun rememberGoogleSignInLauncher(
                 viewModel.signInWithGoogle(credential)
             } else {
                 Log.e("GoogleSignIn", "ID Token is null.")
-                // REVISI: Gunakan setAuthState
                 viewModel.setAuthState(AuthState.Error("Gagal mendapatkan token Google."))
             }
         } catch (e: ApiException) {
-            // Penanganan error jika dibatalkan atau gagal
             if (e.statusCode != 12501) { // 12501 = Cancelled by user
                 Log.w("GoogleSignIn", "Google sign in failed", e)
-                // REVISI: Gunakan setAuthState
                 viewModel.setAuthState(AuthState.Error("Sign-In Google dibatalkan atau gagal: ${e.statusCode}"))
             } else {
-                // REVISI: Gunakan setAuthState
-                viewModel.setAuthState(AuthState.Idle) // Reset state jika dibatalkan
+                viewModel.setAuthState(AuthState.Idle)
             }
         }
     }
 
-    // Mengamati AuthState untuk navigasi
     val authState = viewModel.authState.collectAsState()
     LaunchedEffect(authState.value) {
         if (authState.value is AuthState.Success) {
@@ -94,7 +89,6 @@ fun rememberGoogleSignInLauncher(
         }
     }
 
-    // Mengembalikan fungsi yang memicu Google Sign-In UI
     return { launcher.launch(googleSignInClient.signInIntent) }
 }
 // ====================================================================
@@ -105,6 +99,7 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit,
     onRegisterClick: () -> Unit,
     onForgotPasswordClick: () -> Unit,
+    onGuestClick: () -> Unit, // <--- 1. TAMBAHAN PARAMETER TOMBOL TAMU
     viewModel: AuthViewModel = viewModel()
 ) {
     var email by remember { mutableStateOf("") }
@@ -115,7 +110,6 @@ fun LoginScreen(
     val authState = viewModel.authState.collectAsState()
     val scrollState = rememberScrollState()
 
-    // HOOK GOOGLE SIGN-IN
     val onGoogleClick = rememberGoogleSignInLauncher(
         viewModel = viewModel,
         onSignInSuccess = onLoginSuccess
@@ -222,7 +216,7 @@ fun LoginScreen(
                         }
                     }
 
-                    // TOMBOL GOOGLE FULL-WIDTH
+                    // TOMBOL GOOGLE
                     OutlinedButton(
                         onClick = onGoogleClick,
                         modifier = Modifier
@@ -245,9 +239,7 @@ fun LoginScreen(
                                 contentDescription = "Google Logo",
                                 modifier = Modifier.size(20.dp)
                             )
-
                             Spacer(Modifier.width(12.dp))
-
                             Text(
                                 text = "Lanjutkan dengan Google",
                                 fontSize = 16.sp,
@@ -367,7 +359,22 @@ fun LoginScreen(
                         Text("Masuk", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                     }
 
-                    Spacer(Modifier.height(16.dp))
+                    // --- 2. TAMBAHAN: TOMBOL MASUK SEBAGAI TAMU ---
+                    Spacer(Modifier.height(12.dp))
+                    TextButton(
+                        onClick = onGuestClick,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "Masuk sebagai Tamu",
+                            color = Color(0xFF5B7BA4),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    // ---------------------------------------------
+
+                    Spacer(Modifier.height(8.dp))
 
                     // AUTH STATE
                     when (val state = authState.value) {
@@ -378,7 +385,7 @@ fun LoginScreen(
                             textAlign = TextAlign.Center
                         )
                         is AuthState.Success -> {
-                            // Navigasi dihandle oleh LaunchedEffect di rememberGoogleSignInLauncher
+                            // Navigasi dihandle LaunchedEffect
                         }
                         else -> {}
                     }
@@ -390,7 +397,7 @@ fun LoginScreen(
             Text(
                 text = "© 2025 Healthcare. All rights reserved.",
                 fontSize = 12.sp,
-                color = Color.White.copy(alpha = 0.7f),
+                color = Color.Black.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center
             )
         }

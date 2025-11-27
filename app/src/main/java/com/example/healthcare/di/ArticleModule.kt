@@ -16,12 +16,12 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object ArticleModule {
 
-    // URL BARU: NewsData.io
+    // URL NewsData.io
     private const val NEWS_BASE_URL = "https://newsdata.io/api/1/"
 
     @Provides
     @Singleton
-    @Named("NewsRetrofit")
+    @Named("NewsRetrofit") // Nama ini PENTING biar gak ketukar sama Flask
     fun provideNewsRetrofit(): Retrofit {
         return Retrofit.Builder()
             .baseUrl(NEWS_BASE_URL)

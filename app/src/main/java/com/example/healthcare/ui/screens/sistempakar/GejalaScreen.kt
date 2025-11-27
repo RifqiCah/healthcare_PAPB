@@ -29,7 +29,7 @@ import com.example.healthcare.viewmodel.SistemPakarViewModel
 fun GejalaScreen(
     onBackClick: () -> Unit,
     onLanjutClick: () -> Unit,
-    viewModel: SistemPakarViewModel = hiltViewModel()
+    viewModel: SistemPakarViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
 

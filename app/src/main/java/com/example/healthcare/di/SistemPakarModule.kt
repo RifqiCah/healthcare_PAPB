@@ -7,8 +7,11 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor // Pastikan library ini ada di build.gradle
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 import javax.inject.Named
 import javax.inject.Singleton
 
@@ -16,17 +19,34 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object SistemPakarModule {
 
-    // GANTI URL INI:
-    // Jika Emulator Android Studio: "http://10.0.2.2:5000/"
-    // Jika HP Asli (Lewat Ngrok): "https://xxxx-xxxx.ngrok-free.app/"
+    // URL untuk Emulator Android Studio
     private const val FLASK_BASE_URL = "http://10.0.2.2:5000/"
 
     @Provides
     @Singleton
-    @Named("FlaskRetrofit") // Kita kasih nama biar gak bentrok sama NewsAPI
-    fun provideFlaskRetrofit(): Retrofit {
+    @Named("FlaskOkHttpClient")
+    fun provideFlaskOkHttpClient(): OkHttpClient {
+        // 1. Buat Logger agar request & response muncul di Logcat (PENTING BUAT DEBUG)
+        val loggingInterceptor = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        }
+
+        return OkHttpClient.Builder()
+            .addInterceptor(loggingInterceptor)
+            // 2. PERPANJANG TIMEOUT (Model AI kadang butuh waktu lama mikir)
+            .connectTimeout(30, TimeUnit.SECONDS) // Waktu maksimal nyambung ke server
+            .readTimeout(30, TimeUnit.SECONDS)    // Waktu maksimal nunggu balasan server
+            .writeTimeout(30, TimeUnit.SECONDS)   // Waktu maksimal kirim data
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    @Named("FlaskRetrofit")
+    fun provideFlaskRetrofit(@Named("FlaskOkHttpClient") client: OkHttpClient): Retrofit {
         return Retrofit.Builder()
             .baseUrl(FLASK_BASE_URL)
+            .client(client) // Pasang client yang sudah kita setting di atas
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
