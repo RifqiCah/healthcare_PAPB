@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.healthcare.domain.model.Article
+import com.example.healthcare.data.model.DiagnosaResult // ✅ Import yang Benar
 import com.example.healthcare.viewmodel.SistemPakarViewModel
 
 @Composable
@@ -37,21 +38,23 @@ fun DetailScreen(
     onBackClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val hasilDiagnosa = uiState.hasilDiagnosa
+    val hasilDiagnosa = uiState.hasilDiagnosa // Tipe data sekarang: List<DiagnosaResult>?
     val articles = uiState.relatedArticles
     val isArticleLoading = uiState.isArticlesLoading
 
     val context = LocalContext.current
 
-    // Ambil nama penyakit ranking 1 untuk ditampilkan di judul
-    val topDiseaseName = hasilDiagnosa?.kemungkinan?.firstOrNull()?.nama ?: "Tidak Diketahui"
+    // ✅ PERBAIKAN LOGIC:
+    // 1. Tidak perlu .kemungkinan (karena hasilDiagnosa sudah berupa List)
+    // 2. Ganti .nama menjadi .penyakit (sesuai data class DiagnosaResult baru)
+    val topDiseaseName = hasilDiagnosa?.firstOrNull()?.penyakit ?: "Tidak Diketahui"
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 1. HERO SECTION (Edge-to-edge)
+            // 1. HERO SECTION
             item {
                 HeroSection()
                 Spacer(modifier = Modifier.height(24.dp))
@@ -63,21 +66,7 @@ fun DetailScreen(
                 Spacer(modifier = Modifier.height(32.dp))
             }
 
-            // 3. HEADER TEXT
-//            item {
-//                Text(
-//                    text = "Rekomendasi & Artikel",
-//                    fontSize = 20.sp,
-//                    fontWeight = FontWeight.Bold,
-//                    color = Color(0xFF00BCD4),
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .padding(horizontal = 20.dp)
-//                )
-//                Spacer(modifier = Modifier.height(16.dp))
-//            }
-
-            // 4. INFO PENYAKIT UTAMA
+            // 3. INFO PENYAKIT UTAMA (Top 1)
             item {
                 Card(
                     colors = CardDefaults.cardColors(
@@ -94,7 +83,7 @@ fun DetailScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            // Badge
+                            // Badge Icon
                             Surface(
                                 shape = CircleShape,
                                 color = Color.White,
@@ -112,7 +101,7 @@ fun DetailScreen(
 
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    "Hasil Diagnosa:",
+                                    "Hasil Diagnosa Tertinggi:",
                                     fontSize = 12.sp,
                                     color = Color(0xFF00838F),
                                     fontWeight = FontWeight.Medium
@@ -127,9 +116,7 @@ fun DetailScreen(
                         }
 
                         Spacer(modifier = Modifier.height(12.dp))
-
                         Divider(color = Color(0xFF00BCD4).copy(alpha = 0.2f))
-
                         Spacer(modifier = Modifier.height(12.dp))
 
                         Text(
@@ -144,7 +131,7 @@ fun DetailScreen(
                 Spacer(modifier = Modifier.height(24.dp))
             }
 
-            // 5. HEADER ARTIKEL
+            // 4. HEADER ARTIKEL
             item {
                 Row(
                     modifier = Modifier
@@ -167,11 +154,10 @@ fun DetailScreen(
                         )
                     }
                 }
-
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            // 6. LIST ARTIKEL
+            // 5. LIST ARTIKEL
             if (isArticleLoading) {
                 item {
                     Box(
@@ -229,7 +215,7 @@ fun DetailScreen(
                 }
             }
 
-            // 7. TOMBOL NAVIGASI
+            // 6. TOMBOL NAVIGASI
             item {
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -253,7 +239,6 @@ fun DetailScreen(
                             modifier = Modifier.weight(1f)
                         ) {
                             Text("Kembali", color = Color(0xFF00BCD4))
-
                         }
 
                         Spacer(modifier = Modifier.width(16.dp))
@@ -277,7 +262,7 @@ fun DetailScreen(
     }
 }
 
-// --- KOMPONEN ITEM ARTIKEL (IMPROVED) ---
+// --- KOMPONEN ITEM ARTIKEL ---
 @Composable
 fun ArticleItemCard(
     article: Article,

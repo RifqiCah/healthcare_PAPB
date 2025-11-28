@@ -1,54 +1,22 @@
 package com.example.healthcare.data.model
 
-import com.google.gson.annotations.SerializedName
+// --- MODEL DATA UNTUK VERSI OFFLINE (ONNX) ---
 
-// --- RESPONSE UTAMA ---
-// Cocok dengan: jsonify({'status': 'success', 'data': ...})
-data class SymptomResponse(
-    @SerializedName("status")
-    val status: String? = null, // Kita kasih ? (Nullable) biar kalau server lupa kirim status, app tidak crash
-
-    @SerializedName("data")
-    val data: List<SymptomItem> = emptyList() // Default list kosong jika data null
+// 1. Untuk List Gejala (Checkbox UI)
+// Menggantikan SymptomItem & SymptomResponse
+data class SymptomData(
+    val id: String,     // ID Inggris (cth: "headache") - Untuk input ke ONNX
+    val label: String   // Label Indo (cth: "Sakit Kepala") - Untuk UI
 )
 
-data class SymptomItem(
-    @SerializedName("id")
-    val id: String,
-
-    @SerializedName("label")
-    val label: String
+// 2. Untuk Hasil Diagnosa
+// Menggantikan DiagnosaItemDto & PredictionResponse
+data class DiagnosaResult(
+    val penyakit: String,
+    val persentase: Float, // Pakai Float karena ONNX outputnya Float
+    val deskripsi: String
 )
 
-
-// --- REQUEST (Data yang dikirim ke API) ---
-data class PredictionRequest(
-    @SerializedName("gejala")
-    val gejala: List<String>
-)
-
-// --- RESPONSE UTAMA (Data yang diterima dari API) ---
-data class PredictionResponse(
-    @SerializedName("status")
-    val status: String? = null,
-
-    // INI YANG HILANG SEBELUMNYA:
-    @SerializedName("diagnosa")
-    val diagnosa: List<DiagnosaItemDto> = emptyList(), // Biar repo bisa panggil .diagnosa
-
-    @SerializedName("gejala_input")
-    val gejalaInput: List<String> = emptyList()
-)
-
-// --- ITEM DETAIL (Data detail per penyakit) ---
-data class DiagnosaItemDto(
-    // INI YANG HILANG SEBELUMNYA:
-    @SerializedName("penyakit")
-    val penyakit: String,      // Biar repo bisa panggil .penyakit
-
-    @SerializedName("persentase")
-    val persentase: Double,    // Biar repo bisa panggil .persentase
-
-    @SerializedName("deskripsi")
-    val deskripsi: String?     // Biar repo bisa panggil .deskripsi
-)
+// Catatan:
+// Kita tidak butuh lagi 'PredictionRequest' atau 'SymptomResponse'
+// karena kita tidak perlu parsing JSON "status": "success" dari server lagi.

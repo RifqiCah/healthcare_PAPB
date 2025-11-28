@@ -270,7 +270,8 @@ fun SistemPakarScreen(
                                             color = MaterialTheme.colorScheme.primaryContainer
                                         ) {
                                             Text(
-                                                text = "${item.penyakit}\n${item.persentase}%",
+                                                // ✅ GANTI JADI INI (Format 2 Desimal):
+                                                text = "${item.penyakit}\n${String.format("%.2f", item.persentase)}%",
                                                 style = MaterialTheme.typography.bodySmall.copy(
                                                     fontWeight = FontWeight.Bold
                                                 ),

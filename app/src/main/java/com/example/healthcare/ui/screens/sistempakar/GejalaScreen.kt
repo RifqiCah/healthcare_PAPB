@@ -27,6 +27,15 @@ fun GejalaScreen(
     val uiState by viewModel.uiState.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
 
+    // --- ✅ 1. TRIGGER NAVIGASI (INI YANG HILANG/KURANG) ---
+    // Kode ini memantau: "Apakah hasil diagnosa sudah keluar?"
+    // Kalau sudah ada, dia otomatis panggil onLanjutClick()
+    LaunchedEffect(uiState.hasilDiagnosa) {
+        if (!uiState.hasilDiagnosa.isNullOrEmpty()) {
+            onLanjutClick()
+        }
+    }
+
     val serverSymptoms = uiState.availableSymptoms
 
     val displayedGejala = remember(searchQuery, serverSymptoms, uiState.selectedGejala) {
@@ -38,12 +47,6 @@ fun GejalaScreen(
             serverSymptoms.filter {
                 it.label.contains(searchQuery, ignoreCase = true)
             }
-        }
-    }
-
-    LaunchedEffect(uiState.hasilDiagnosa) {
-        if (uiState.hasilDiagnosa != null) {
-            onLanjutClick()
         }
     }
 
@@ -64,9 +67,7 @@ fun GejalaScreen(
                 Spacer(modifier = Modifier.height(24.dp))
             }
 
-            // --- 3. INPUT DATA DIRI DIHAPUS ---
-
-            // 4. HEADER PILIH GEJALA
+            // 3. HEADER PILIH GEJALA
             item {
                 Text(
                     text = "Pilih Gejala",
@@ -78,7 +79,7 @@ fun GejalaScreen(
                 )
             }
 
-            // 5. SEARCH BAR
+            // 4. SEARCH BAR
             item {
                 Column(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)
@@ -108,7 +109,13 @@ fun GejalaScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    if (searchQuery.isBlank()) {
+                    if (serverSymptoms.isEmpty()) {
+                        Text(
+                            text = "Gagal memuat daftar gejala. Mohon restart aplikasi.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    } else if (searchQuery.isBlank()) {
                         Text(
                             text = "Menampilkan 5 gejala teratas. Ketik untuk mencari lainnya.",
                             style = MaterialTheme.typography.bodySmall,
@@ -122,18 +129,20 @@ fun GejalaScreen(
                         )
                     }
 
+                    // Menampilkan Error jika diagnosa gagal (misal tidak ada cocok)
                     if (uiState.error != null) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = uiState.error ?: "",
-                            color = MaterialTheme.colorScheme.error
+                            color = MaterialTheme.colorScheme.error,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            // 6. LIST GEJALA
+            // 5. LIST GEJALA
             items(displayedGejala) { symptomItem ->
                 val isSelected = uiState.selectedGejala.contains(symptomItem.id)
 
@@ -155,12 +164,18 @@ fun GejalaScreen(
                     ) {
                         Checkbox(
                             checked = isSelected,
-                            onCheckedChange = { viewModel.toggleGejala(symptomItem.id) }
+                            onCheckedChange = { viewModel.toggleGejala(symptomItem.id) },
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = Color.White,
+                                checkmarkColor = Color(0xFF00BCD4),
+                                uncheckedColor = Color.Gray
+                            )
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = symptomItem.label,
                             style = MaterialTheme.typography.bodyMedium,
+                            color = if (isSelected) Color.White else Color.Black,
                             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                             modifier = Modifier.weight(1f)
                         )
@@ -168,7 +183,7 @@ fun GejalaScreen(
                 }
             }
 
-            // 7. TOMBOL NAVIGASI
+            // 6. TOMBOL NAVIGASI
             item {
                 Spacer(modifier = Modifier.height(16.dp))
                 Surface(
@@ -191,14 +206,11 @@ fun GejalaScreen(
 
                         Spacer(modifier = Modifier.width(16.dp))
 
-                        // --- PERBAIKAN DI SINI ---
                         Button(
-                            onClick = { viewModel.predict() },
+                            onClick = { viewModel.predict() }, // ✅ Ini memicu ViewModel
                             shape = RoundedCornerShape(50),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00BCD4)),
                             modifier = Modifier.weight(1f),
-                            // SYARAT BUTTON ENABLED DIUBAH:
-                            // Hanya cek apakah gejala sudah dipilih dan tidak loading
                             enabled = uiState.selectedGejala.isNotEmpty() && !uiState.isLoading
                         ) {
                             if (uiState.isLoading) {

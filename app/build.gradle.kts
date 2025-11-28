@@ -13,6 +13,8 @@ plugins {
 
     id("com.google.gms.google-services")
 }
+import java.util.Properties
+import java.io.FileInputStream
 
 android {
     namespace = "com.example.healthcare"
@@ -29,7 +31,16 @@ android {
         multiDexEnabled = true
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "NEWS_API_KEY", "\"pub_3d90d6e66e784e2bb222e1ce7a92712d\"")
+        // 👇 KODE YANG SUDAH DIPERBAIKI (Lebih Ringkas & Aman)
+        val keystoreFile = project.rootProject.file("local.properties")
+        val properties = Properties()
+
+        if (keystoreFile.exists()) {
+            properties.load(FileInputStream(keystoreFile))
+        }
+
+        val newsApiKey = properties.getProperty("NEWS_API_KEY") ?: ""
+        buildConfigField("String", "NEWS_API_KEY", "\"$newsApiKey\"")
     }
 
     buildTypes {
@@ -118,6 +129,12 @@ dependencies {
     implementation("com.google.android.gms:play-services-auth:21.2.0")
 
     implementation("com.google.firebase:firebase-storage")
+
+    // 1. Mesin AI ONNX Runtime
+    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.19.0")
+
+    // 2. Google Gson (untuk baca file JSON)
+    implementation("com.google.code.gson:gson:2.10.1")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")

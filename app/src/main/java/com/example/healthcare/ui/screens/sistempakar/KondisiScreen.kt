@@ -2,7 +2,6 @@ package com.example.healthcare.ui.screens.sistempakar
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,7 +18,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.healthcare.domain.model.KemungkinanPenyakit
+// ✅ GANTI IMPORT INI:
+import com.example.healthcare.data.model.DiagnosaResult
 import com.example.healthcare.viewmodel.SistemPakarViewModel
 
 @Composable
@@ -31,14 +31,14 @@ fun KondisiScreen(
     val uiState by viewModel.uiState.collectAsState()
     val hasilDiagnosa = uiState.hasilDiagnosa
 
-    // Gunakan Box agar layout fleksibel seperti ArtikelScreen
+    // Gunakan Box agar layout fleksibel
     Box(modifier = Modifier.fillMaxSize()) {
 
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 1. HERO SECTION (Tanpa padding, langsung edge-to-edge)
+            // 1. HERO SECTION
             item {
                 HeroSection()
                 Spacer(modifier = Modifier.height(24.dp))
@@ -72,9 +72,10 @@ fun KondisiScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            // 4. HASIL DIAGNOSA
-            if (hasilDiagnosa != null && hasilDiagnosa.kemungkinan.isNotEmpty()) {
-                itemsIndexed(hasilDiagnosa.kemungkinan) { index, penyakit ->
+            // 4. HASIL DIAGNOSA (PERBAIKAN LOGIC)
+            // ✅ Tidak perlu cek .kemungkinan, karena hasilDiagnosa itu sendiri sudah List
+            if (!hasilDiagnosa.isNullOrEmpty()) {
+                itemsIndexed(hasilDiagnosa) { index, penyakit ->
                     PenyakitCard(
                         penyakit = penyakit,
                         rank = index + 1,
@@ -93,6 +94,7 @@ fun KondisiScreen(
                         if (uiState.isLoading) {
                             CircularProgressIndicator()
                         } else {
+                            // Tampilkan pesan hanya jika tidak loading dan data kosong
                             Text("Belum ada hasil diagnosa.", color = Color.Gray)
                         }
                     }
@@ -112,7 +114,7 @@ fun KondisiScreen(
                         shape = RoundedCornerShape(50),
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Ubah Gejala", color = Color(0xFF00BCD4),)
+                        Text("Ubah Gejala", color = Color(0xFF00BCD4))
                     }
 
                     Spacer(modifier = Modifier.width(16.dp))
@@ -124,13 +126,13 @@ fun KondisiScreen(
                             containerColor = Color(0xFF00BCD4)
                         ),
                         modifier = Modifier.weight(1f),
-                        enabled = hasilDiagnosa != null
+                        // ✅ Enabled jika list tidak null
+                        enabled = !hasilDiagnosa.isNullOrEmpty()
                     ) {
                         Text("Lihat Detail", color = Color.White)
                     }
                 }
 
-                // Spacer untuk ruang di bawah
                 Spacer(modifier = Modifier.height(80.dp))
             }
         }
@@ -140,7 +142,7 @@ fun KondisiScreen(
 // --- CARD EXPANDABLE ---
 @Composable
 fun PenyakitCard(
-    penyakit: KemungkinanPenyakit,
+    penyakit: DiagnosaResult, // ✅ Ganti tipe data ke DiagnosaResult
     rank: Int,
     modifier: Modifier = Modifier
 ) {
@@ -182,7 +184,8 @@ fun PenyakitCard(
                     Spacer(modifier = Modifier.width(12.dp))
 
                     Text(
-                        text = penyakit.nama,
+                        // ✅ Ganti .nama menjadi .penyakit
+                        text = penyakit.penyakit,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -190,7 +193,8 @@ fun PenyakitCard(
                 }
 
                 Text(
-                    text = "${penyakit.persentase}%",
+                    // ✅ Format persentase (Float ke Int atau String)
+                    text = "${penyakit.persentase.toInt()}%",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = if (rank == 1) Color(0xFF4CAF50) else Color(0xFF00BCD4)

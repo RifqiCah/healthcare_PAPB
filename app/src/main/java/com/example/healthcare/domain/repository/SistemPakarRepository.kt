@@ -1,21 +1,15 @@
 package com.example.healthcare.domain.repository
 
-import com.example.healthcare.data.model.SymptomItem
-import com.example.healthcare.domain.model.Diagnosa
-import com.example.healthcare.domain.model.DiagnosisHistory // <-- Pastikan Import Model Baru ini
+import com.example.healthcare.domain.model.DiagnosisHistory
+// Hapus import SymptomItem/Diagnosa dll yang lama
 
 interface SistemPakarRepository {
+    // ❌ HAPUS INI:
+    // suspend fun getSymptoms(): Result<List<SymptomItem>>
+    // suspend fun getPrediction(gejala: List<String>): Result<Diagnosa>
 
-    // Fungsi Prediksi (Lama)
-    suspend fun getPrediction(gejala: List<String>): Result<Diagnosa>
-
-    // Fungsi Ambil Gejala (Lama)
-    suspend fun getSymptoms(): Result<List<SymptomItem>>
-
-    // --- FUNGSI BARU (RIWAYAT) ---
-    // Menyimpan satu data riwayat baru
-    suspend fun saveHistory(history: DiagnosisHistory)
-
-    // Mengambil semua daftar riwayat yang tersimpan
+    // ✅ PERTAHANKAN INI (Untuk History Lokal):
     suspend fun getHistory(): List<DiagnosisHistory>
+    suspend fun saveHistory(history: DiagnosisHistory)
+    suspend fun clearHistory()
 }
