@@ -45,6 +45,7 @@ fun AppNavigation() {
         if (auth.currentUser != null) {
             action()
         } else {
+            // Tampilkan dialog jika user mencoba mengakses fitur berbayar
             showLoginDialog = true
         }
     }
@@ -69,9 +70,11 @@ fun AppNavigation() {
             content()
         } else {
             LaunchedEffect(Unit) {
+                // Logika GUARD (hanya menampilkan dialog)
                 showLoginDialog = true
-                navController.popBackStack()
             }
+            // Tampilkan Composable kosong sementara dialog muncul.
+            Box(modifier = Modifier.fillMaxSize())
         }
     }
 
@@ -108,7 +111,7 @@ fun AppNavigation() {
             ForgotPasswordScreen(onBackClick = { navController.popBackStack() })
         }
 
-        // == HOME SCREEN (Dengan Bottom Navbar) ==
+        // == HOME SCREEN (Akses Guest Diizinkan) ==
         composable(AppRoutes.HOME_SCREEN) {
             Scaffold(
                 bottomBar = {
@@ -121,7 +124,8 @@ fun AppNavigation() {
                         .fillMaxSize(),
                     onSistemPakarClick = {
                         checkAuthAndNavigate {
-                            navController.navigate(AppRoutes.SISTEM_PAKAR_SCREEN)
+                            // REVISI: Langsung navigasi ke sub-graph flow diagnosa
+                            navController.navigate("sistem_pakar_flow")
                         }
                     },
                     onArtikelClick = {
@@ -133,7 +137,7 @@ fun AppNavigation() {
             }
         }
 
-        // == PROFILE (Dengan Bottom Navbar) ==
+        // == PROFILE (Dilindungi) ==
         composable(AppRoutes.PROFILE_SCREEN) {
             LoginGuardScreen {
                 Scaffold(
@@ -155,7 +159,7 @@ fun AppNavigation() {
             }
         }
 
-        // == ARTIKEL (Dengan Bottom Navbar) ==
+        // == ARTIKEL (Dilindungi) ==
         composable(AppRoutes.ARTIKEL_SCREEN) {
             LoginGuardScreen {
                 Scaffold(
@@ -176,7 +180,7 @@ fun AppNavigation() {
             }
         }
 
-        // == ARTIKEL DETAIL (Tanpa Bottom Navbar) ==
+        // == ARTIKEL DETAIL (Dilindungi) ==
         composable(
             route = AppRoutes.ARTIKEL_DETAIL_SCREEN,
             arguments = listOf(
@@ -194,7 +198,7 @@ fun AppNavigation() {
             }
         }
 
-        // == SISTEM PAKAR (Dengan Bottom Navbar) ==
+        // == SISTEM PAKAR (Dilindungi) ==
         composable(AppRoutes.SISTEM_PAKAR_SCREEN) {
             LoginGuardScreen {
                 Scaffold(
@@ -206,6 +210,7 @@ fun AppNavigation() {
                         modifier = Modifier
                             .padding(paddingValues)
                             .fillMaxSize(),
+                        // REVISI: Langsung navigasi ke sub-graph flow diagnosa
                         onMulaiClick = { navController.navigate("sistem_pakar_flow") },
                         onBackClick = { navController.popBackStack() }
                     )
@@ -213,7 +218,9 @@ fun AppNavigation() {
             }
         }
 
-        // == FLOW DIAGNOSA (Tanpa Navbar, Full Screen) ==
+        // ** INFO_SCREEN DIHAPUS **
+
+        // == FLOW DIAGNOSA ==
         navigation(
             startDestination = AppRoutes.GEJALA_SCREEN,
             route = "sistem_pakar_flow"

@@ -37,6 +37,7 @@ import com.example.healthcare.R
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 
 // === FUNGSI GOOGLE SIGN-IN LAUNCHER (Digunakan di Login & Register) ===
@@ -73,6 +74,7 @@ fun rememberGoogleSignInLauncher(
                 viewModel.setAuthState(AuthState.Error("Gagal mendapatkan token Google."))
             }
         } catch (e: ApiException) {
+            // Penanganan error jika dibatalkan atau gagal
             if (e.statusCode != 12501) { // 12501 = Cancelled by user
                 Log.w("GoogleSignIn", "Google sign in failed", e)
                 viewModel.setAuthState(AuthState.Error("Sign-In Google dibatalkan atau gagal: ${e.statusCode}"))
@@ -82,6 +84,7 @@ fun rememberGoogleSignInLauncher(
         }
     }
 
+    // Mengamati AuthState untuk navigasi
     val authState = viewModel.authState.collectAsState()
     LaunchedEffect(authState.value) {
         if (authState.value is AuthState.Success) {
@@ -89,6 +92,7 @@ fun rememberGoogleSignInLauncher(
         }
     }
 
+    // Mengembalikan fungsi yang memicu Google Sign-In UI
     return { launcher.launch(googleSignInClient.signInIntent) }
 }
 // ====================================================================
@@ -99,7 +103,7 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit,
     onRegisterClick: () -> Unit,
     onForgotPasswordClick: () -> Unit,
-    onGuestClick: () -> Unit, // <--- 1. TAMBAHAN PARAMETER TOMBOL TAMU
+    onGuestClick: () -> Unit, // Parameter Tamu
     viewModel: AuthViewModel = viewModel()
 ) {
     var email by remember { mutableStateOf("") }
@@ -241,7 +245,7 @@ fun LoginScreen(
                             )
                             Spacer(Modifier.width(12.dp))
                             Text(
-                                text = "Lanjutkan dengan Google",
+                                text = "Masuk dengan Google",
                                 fontSize = 16.sp,
                                 color = Color.Black
                             )
@@ -359,10 +363,15 @@ fun LoginScreen(
                         Text("Masuk", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                     }
 
-                    // --- 2. TAMBAHAN: TOMBOL MASUK SEBAGAI TAMU ---
+                    // TOMBOL MASUK SEBAGAI TAMU (DENGAN LOGIC SIGNOUT)
                     Spacer(Modifier.height(12.dp))
                     TextButton(
-                        onClick = onGuestClick,
+                        onClick = {
+                            // WAJIB: Bersihkan sesi user yang sudah ada
+                            FirebaseAuth.getInstance().signOut()
+                            // Lanjutkan navigasi ke HomeScreen (Tamu)
+                            onGuestClick()
+                        },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
@@ -372,7 +381,6 @@ fun LoginScreen(
                             fontWeight = FontWeight.Medium
                         )
                     }
-                    // ---------------------------------------------
 
                     Spacer(Modifier.height(8.dp))
 
