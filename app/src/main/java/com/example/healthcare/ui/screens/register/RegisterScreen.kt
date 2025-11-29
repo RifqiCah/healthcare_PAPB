@@ -186,7 +186,7 @@ fun RegisterScreen(
                                 Spacer(Modifier.width(12.dp))
 
                                 Text(
-                                    text = "Lanjutkan dengan Google",
+                                    text = "Daftar dengan Google",
                                     fontSize = 16.sp,
                                     color = Color.Black
                                 )
@@ -317,7 +317,7 @@ fun RegisterScreen(
 
                         if (confirmPassword.isNotEmpty() && confirmPassword != password) {
                             Text(
-                                text = "⚠️ Password tidak cocok",
+                                text = "Password tidak cocok",
                                 color = MaterialTheme.colorScheme.error,
                                 fontSize = 12.sp,
                                 modifier = Modifier
@@ -412,7 +412,7 @@ fun RegisterScreen(
                                     }
 
                                     snackbarHostState.showSnackbar(
-                                        message = "✅ Pendaftaran Berhasil! Silakan Masuk.",
+                                        message = "Pendaftaran Berhasil! Silakan Masuk.",
                                         duration = SnackbarDuration.Short
                                     )
 

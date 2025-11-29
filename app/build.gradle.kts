@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -13,8 +16,6 @@ plugins {
 
     id("com.google.gms.google-services")
 }
-import java.util.Properties
-import java.io.FileInputStream
 
 android {
     namespace = "com.example.healthcare"
@@ -139,6 +140,12 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
+
+    // Splash Screen API
+    implementation("androidx.core:core-splashscreen:1.0.1")
+    // Pastikan ini ada dan menggunakan versi yang stabil (dari compose.bom)
+    // Pastikan platform BOM juga ada:
+    implementation(platform(libs.androidx.compose.bom))
 
 
 }
