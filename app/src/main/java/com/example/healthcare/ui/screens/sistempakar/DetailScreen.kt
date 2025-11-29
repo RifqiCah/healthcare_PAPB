@@ -18,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -27,7 +28,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.healthcare.domain.model.Article
-import com.example.healthcare.data.model.DiagnosaResult // ✅ Import yang Benar
 import com.example.healthcare.viewmodel.SistemPakarViewModel
 
 @Composable
@@ -38,231 +38,275 @@ fun DetailScreen(
     onBackClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val hasilDiagnosa = uiState.hasilDiagnosa // Tipe data sekarang: List<DiagnosaResult>?
+    val hasilDiagnosa = uiState.hasilDiagnosa
     val articles = uiState.relatedArticles
     val isArticleLoading = uiState.isArticlesLoading
 
     val context = LocalContext.current
 
-    // ✅ PERBAIKAN LOGIC:
-    // 1. Tidak perlu .kemungkinan (karena hasilDiagnosa sudah berupa List)
-    // 2. Ganti .nama menjadi .penyakit (sesuai data class DiagnosaResult baru)
     val topDiseaseName = hasilDiagnosa?.firstOrNull()?.penyakit ?: "Tidak Diketahui"
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
+    // --- STRUKTUR UTAMA (LAYER STACKING) ---
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+
+    ) {
+
+        // ==========================================================
+        // LAYER 1: BACKGROUND HEADER (GAMBAR)
+        // ==========================================================
+        HeroSection(
+            modifier = Modifier.align(Alignment.TopCenter)
+        )
+
+        // ==========================================================
+        // LAYER 2: KONTEN UTAMA (LEMBARAN MELENGKUNG)
+        // ==========================================================
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                // PENTING: Turunkan 270dp agar gambar Hero (300dp) terlihat sebagian
+                .padding(top = 270.dp)
+                // PENTING: Lengkungan sudut atas
+                .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primaryContainer, // Atas
+                            MaterialTheme.colorScheme.primaryContainer, // Tengah
+                            MaterialTheme.colorScheme.surface           // Bawah
+                        )
+                    )
+                ),
+            color = Color.Transparent,
         ) {
-            // 1. HERO SECTION
-            item {
-                HeroSection()
-                Spacer(modifier = Modifier.height(24.dp))
-            }
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // 1. Spacer Header (Pengganti HeroSection di dalam list)
+                item {
+                    Spacer(modifier = Modifier.height(32.dp))
+                }
 
-            // 2. STEPPER SECTION
-            item {
-                StepperSection(activeStep = 3) // Step 3 = Detail
-                Spacer(modifier = Modifier.height(32.dp))
-            }
+                // 2. STEPPER SECTION
+                item {
+                    StepperSection(activeStep = 3) // Step 3 = Detail
+                    Spacer(modifier = Modifier.height(32.dp))
+                }
 
-            // 3. INFO PENYAKIT UTAMA (Top 1)
-            item {
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFFE0F7FA) // Light Cyan
-                    ),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp)
-                ) {
-                    Column(Modifier.padding(20.dp)) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            // Badge Icon
-                            Surface(
-                                shape = CircleShape,
-                                color = Color.White,
-                                modifier = Modifier.size(40.dp)
+                // 3. INFO PENYAKIT UTAMA (Top 1)
+                item {
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            // Menggunakan primaryContainer (Cyan Muda di Light Mode)
+                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                        ),
+                        shape = RoundedCornerShape(16.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp)
+                    ) {
+                        Column(Modifier.padding(20.dp)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
                             ) {
-                                Box(contentAlignment = Alignment.Center) {
+                                // Badge Icon
+                                Surface(
+                                    shape = CircleShape,
+                                    // Icon background putih/surface
+                                    color = MaterialTheme.colorScheme.surface,
+                                    modifier = Modifier.size(40.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Text(
+                                            text = "🩺",
+                                            fontSize = 20.sp
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.width(12.dp))
+
+                                Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        text = "🩺",
-                                        fontSize = 20.sp
+                                        "Hasil Diagnosa Tertinggi:",
+                                        fontSize = 12.sp,
+                                        // Warna teks yang kontras di atas primaryContainer
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                    Text(
+                                        text = topDiseaseName,
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
                                     )
                                 }
                             }
 
-                            Spacer(modifier = Modifier.width(12.dp))
+                            Spacer(modifier = Modifier.height(12.dp))
 
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    "Hasil Diagnosa Tertinggi:",
-                                    fontSize = 12.sp,
-                                    color = Color(0xFF00838F),
-                                    fontWeight = FontWeight.Medium
-                                )
-                                Text(
-                                    text = topDiseaseName,
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF00838F)
-                                )
-                            }
+                            Divider(
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f)
+                            )
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            Text(
+                                text = "Berikut adalah artikel kesehatan yang relevan untuk membantu Anda memahami kondisi ini lebih lanjut.",
+                                fontSize = 14.sp,
+                                lineHeight = 20.sp,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
                         }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Divider(color = Color(0xFF00BCD4).copy(alpha = 0.2f))
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Text(
-                            text = "Berikut adalah artikel kesehatan yang relevan untuk membantu Anda memahami kondisi ini lebih lanjut.",
-                            fontSize = 14.sp,
-                            lineHeight = 20.sp,
-                            color = Color(0xFF00838F)
-                        )
                     }
+
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
-            }
-
-            // 4. HEADER ARTIKEL
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        "Artikel Terkait",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    if (!isArticleLoading && articles.isNotEmpty()) {
-                        Text(
-                            "${articles.size} artikel",
-                            fontSize = 14.sp,
-                            color = Color.Gray
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-
-            // 5. LIST ARTIKEL
-            if (isArticleLoading) {
+                // 4. HEADER ARTIKEL
                 item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(150.dp)
-                            .padding(horizontal = 20.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(color = Color(0xFF00BCD4))
-                    }
-                }
-            } else if (articles.isEmpty()) {
-                item {
-                    Card(
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFF5F5F5)
-                        )
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
+                        Text(
+                            text = "Artikel Terkait",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+
+                        if (!isArticleLoading && articles.isNotEmpty()) {
+                            Text(
+                                text = "${articles.size} artikel",
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
+                // 5. LIST ARTIKEL
+                if (isArticleLoading) {
+                    item {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(40.dp),
+                                .height(150.dp)
+                                .padding(horizontal = 20.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("📰", fontSize = 40.sp)
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    "Tidak ada artikel ditemukan",
-                                    color = Color.Gray,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
+                            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                        }
+                    }
+                } else if (articles.isEmpty()) {
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(40.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text("📰", fontSize = 40.sp)
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "Tidak ada artikel ditemukan",
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
                             }
                         }
                     }
+                } else {
+                    items(articles) { article ->
+                        ArticleItemCard(
+                            article = article,
+                            onClick = {
+                                if (!article.url.isNullOrEmpty()) {
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(article.url))
+                                    context.startActivity(intent)
+                                }
+                            },
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp)
+                        )
+                    }
                 }
-            } else {
-                items(articles) { article ->
-                    ArticleItemCard(
-                        article = article,
-                        onClick = {
-                            if (!article.url.isNullOrEmpty()) {
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(article.url))
-                                context.startActivity(intent)
-                            }
-                        },
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp)
-                    )
-                }
-            }
 
-            // 6. TOMBOL NAVIGASI
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
+                // 6. TOMBOL NAVIGASI
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp),
-                    shadowElevation = 4.dp,
-                    shape = RoundedCornerShape(16.dp),
-                    color = Color.White
-                ) {
-                    Row(
+                    Surface(
                         modifier = Modifier
-                            .padding(16.dp)
-                            .fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                        shadowElevation = 4.dp,
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surface
                     ) {
-                        OutlinedButton(
-                            onClick = onBackClick,
-                            shape = RoundedCornerShape(50),
-                            modifier = Modifier.weight(1f)
+                        Row(
+                            modifier = Modifier
+                                .padding(16.dp)
+                                .fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Kembali", color = Color(0xFF00BCD4))
-                        }
+                            OutlinedButton(
+                                onClick = onBackClick,
+                                shape = RoundedCornerShape(50),
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = MaterialTheme.colorScheme.primary
+                                ),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
+                            ) {
+                                Text("Kembali")
+                            }
 
-                        Spacer(modifier = Modifier.width(16.dp))
+                            Spacer(modifier = Modifier.width(16.dp))
 
-                        Button(
-                            onClick = onSelesaiClick,
-                            shape = RoundedCornerShape(50),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF00BCD4)
-                            ),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("Selesai", color = Color.White)
+                            Button(
+                                onClick = onSelesaiClick,
+                                shape = RoundedCornerShape(50),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary
+                                ),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Selesai")
+                            }
                         }
                     }
+                    // Spacer bawah agar scroll bisa mentok sampai tombol
+                    Spacer(modifier = Modifier.height(100.dp))
                 }
-
-                Spacer(modifier = Modifier.height(100.dp))
             }
         }
     }
 }
 
-// --- KOMPONEN ITEM ARTIKEL ---
+// --- KOMPONEN ITEM ARTIKEL (Tidak Berubah) ---
 @Composable
 fun ArticleItemCard(
     article: Article,
@@ -275,7 +319,7 @@ fun ArticleItemCard(
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(modifier = Modifier.padding(12.dp)) {
             // Gambar Artikel
@@ -283,7 +327,7 @@ fun ArticleItemCard(
                 modifier = Modifier
                     .size(90.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0xFFF5F5F5))
+                    .background(MaterialTheme.colorScheme.surfaceVariant) // Placeholder warna
             ) {
                 AsyncImage(
                     model = article.urlToImage ?: "https://via.placeholder.com/150",
@@ -298,13 +342,13 @@ fun ArticleItemCard(
                         .align(Alignment.TopEnd)
                         .padding(6.dp),
                     shape = RoundedCornerShape(6.dp),
-                    color = Color(0xFF00BCD4).copy(alpha = 0.9f)
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
                 ) {
                     Text(
                         text = article.sourceName?.take(8) ?: "News",
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
                         fontSize = 10.sp,
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onPrimary,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1
                     )
@@ -326,7 +370,8 @@ fun ArticleItemCard(
                     fontSize = 14.sp,
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis,
-                    lineHeight = 18.sp
+                    lineHeight = 18.sp,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 Row(
@@ -337,14 +382,14 @@ fun ArticleItemCard(
                     Text(
                         text = article.publishedAt?.take(10) ?: "",
                         fontSize = 11.sp,
-                        color = Color.Gray
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
                     Icon(
                         imageVector = Icons.Default.OpenInNew,
                         contentDescription = "Open",
                         modifier = Modifier.size(16.dp),
-                        tint = Color(0xFF00BCD4)
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
             }

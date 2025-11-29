@@ -1,9 +1,6 @@
 package com.example.healthcare.ui.profile
 
-import android.net.Uri
 import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -29,7 +26,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -43,25 +39,18 @@ fun ProfileScreen(
     navController: NavController,
     onLogoutClick: () -> Unit,
     viewModel: ProfileViewModel = hiltViewModel(),
-    themeViewModel: ThemeViewModel = hiltViewModel() // Inject ThemeViewModel
+    themeViewModel: ThemeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    // --- 1. AMBIL STATE TEMA SAAT INI (Untuk Visual RadioButton) ---
+    // --- 1. AMBIL STATE TEMA SAAT INI ---
     val currentTheme by themeViewModel.themeState.collectAsState()
 
     val context = LocalContext.current
 
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showChangePasswordDialog by remember { mutableStateOf(false) }
-    var showThemeDialog by remember { mutableStateOf(false) } // State Dialog Tema
-
-    // --- LAUNCHER UNTUK GANTI FOTO PROFIL ---
-    val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let { viewModel.updateProfilePicture(it) }
-    }
+    var showThemeDialog by remember { mutableStateOf(false) }
 
     // --- EFEK TOAST PESAN ---
     LaunchedEffect(uiState.passwordChangeMessage) {
@@ -80,7 +69,7 @@ fun ProfileScreen(
                 brush = Brush.verticalGradient(
                     colors = listOf(
                         MaterialTheme.colorScheme.primaryContainer, // Atas
-                        MaterialTheme.colorScheme.primaryContainer,          // Tengah
+                        MaterialTheme.colorScheme.primaryContainer, // Tengah
                         MaterialTheme.colorScheme.surface           // Bawah
                     )
                 )
@@ -90,15 +79,12 @@ fun ProfileScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(bottom = 18.dp) // Padding bawah agar tidak ketutup Navbar
+                .padding(bottom = 18.dp)
         ) {
-            // Header Section
+            // Header Section (Hanya Menampilkan Foto, Tidak Bisa Edit)
             ProfileHeader(
                 displayName = uiState.displayName,
-                photoUrl = uiState.photoUrl,
-                onAvatarClick = {
-                    imagePickerLauncher.launch("image/*")
-                }
+                photoUrl = uiState.photoUrl
             )
 
             // Profile Information
@@ -169,25 +155,23 @@ fun ProfileScreen(
         )
     }
 
-    // 3. Dialog Ganti Tema (DENGAN INDIKATOR VISUAL)
+    // 3. Dialog Ganti Tema
     if (showThemeDialog) {
         ThemeSelectionDialog(
-            currentTheme = currentTheme, // Kirim status tema saat ini
+            currentTheme = currentTheme,
             onDismiss = { showThemeDialog = false },
             onThemeSelected = { mode ->
-                themeViewModel.changeTheme(mode) // 0=System, 1=Light, 2=Dark
-                // showThemeDialog = false // Hapus komen ini jika ingin dialog langsung nutup
+                themeViewModel.changeTheme(mode)
             }
         )
     }
 }
 
-// --- HEADER TRANSPARAN ---
+// --- HEADER TRANSPARAN (TANPA EDIT FOTO) ---
 @Composable
 fun ProfileHeader(
     displayName: String,
-    photoUrl: String?,
-    onAvatarClick: () -> Unit
+    photoUrl: String?
 ) {
     Box(
         modifier = Modifier
@@ -201,14 +185,13 @@ fun ProfileHeader(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Profile Avatar
+            // Profile Avatar (Static)
             Box(
                 modifier = Modifier
                     .size(100.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primary)
-                    .border(4.dp, MaterialTheme.colorScheme.surface, CircleShape)
-                    .clickable { onAvatarClick() },
+                    .border(4.dp, MaterialTheme.colorScheme.surface, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 if (photoUrl != null) {
@@ -226,18 +209,7 @@ fun ProfileHeader(
                         tint = MaterialTheme.colorScheme.onPrimary
                     )
                 }
-
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(8.dp)
-                        .size(24.dp)
-                        .background(MaterialTheme.colorScheme.primary, CircleShape)
-                        .border(2.dp, MaterialTheme.colorScheme.surface, CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Default.Edit, null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(14.dp))
-                }
+                // Ikon edit (pensil) dan clickable sudah dihapus
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -321,7 +293,6 @@ fun ThemeChangeButton(onClick: () -> Unit) {
         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
         border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
     ) {
-        // Gunakan ikon Settings atau DarkMode
         Icon(Icons.Outlined.DarkMode, null, Modifier.size(20.dp))
         Spacer(Modifier.width(8.dp))
         Text("Ganti Tema Aplikasi", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
@@ -371,10 +342,10 @@ fun LogoutButton(onClick: () -> Unit) {
     LaunchedEffect(isPressed) { if (isPressed) { kotlinx.coroutines.delay(100); isPressed = false } }
 }
 
-// --- DIALOG PILIHAN TEMA (VISUAL FIXED) ---
+// --- DIALOG PILIHAN TEMA ---
 @Composable
 fun ThemeSelectionDialog(
-    currentTheme: Int, // <-- MENERIMA DATA TEMA
+    currentTheme: Int,
     onDismiss: () -> Unit,
     onThemeSelected: (Int) -> Unit
 ) {
@@ -385,17 +356,17 @@ fun ThemeSelectionDialog(
             Column {
                 ThemeOption(
                     label = "Ikuti Sistem (Default)",
-                    isSelected = currentTheme == 0, // Cek status
+                    isSelected = currentTheme == 0,
                     onClick = { onThemeSelected(0) }
                 )
                 ThemeOption(
                     label = "Mode Terang",
-                    isSelected = currentTheme == 1, // Cek status
+                    isSelected = currentTheme == 1,
                     onClick = { onThemeSelected(1) }
                 )
                 ThemeOption(
                     label = "Mode Gelap",
-                    isSelected = currentTheme == 2, // Cek status
+                    isSelected = currentTheme == 2,
                     onClick = { onThemeSelected(2) }
                 )
             }
@@ -409,7 +380,7 @@ fun ThemeSelectionDialog(
 @Composable
 fun ThemeOption(
     label: String,
-    isSelected: Boolean, // <-- MENERIMA STATUS
+    isSelected: Boolean,
     onClick: () -> Unit
 ) {
     Row(
@@ -420,7 +391,7 @@ fun ThemeOption(
         verticalAlignment = Alignment.CenterVertically
     ) {
         RadioButton(
-            selected = isSelected, // Visual RadioButton Nyala/Mati
+            selected = isSelected,
             onClick = onClick,
             colors = RadioButtonDefaults.colors(selectedColor = MaterialTheme.colorScheme.primary)
         )

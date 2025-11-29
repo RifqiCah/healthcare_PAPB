@@ -13,7 +13,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -26,7 +25,9 @@ import androidx.compose.ui.unit.sp
 import com.example.healthcare.R
 
 @Composable
-fun HeroSection() {
+fun HeroSection(
+    modifier: Modifier = Modifier // ✅ TAMBAHAN: Agar bisa diatur posisinya dari luar
+) {
     val infiniteTransition = rememberInfiniteTransition(label = "hero")
     val scale by infiniteTransition.animateFloat(
         initialValue = 1f,
@@ -38,13 +39,14 @@ fun HeroSection() {
         label = "scale"
     )
 
+    // ✅ PERUBAHAN: Menghapus .clip() agar gambar jadi persegi panjang penuh
+    // Nanti 'Lembaran Putih' di GejalaScreen yang akan menutupi bagian bawahnya.
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(300.dp)
-            .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
     ) {
-        // 1. GAMBAR BACKGROUND (Memenuhi Box)
+        // 1. GAMBAR BACKGROUND
         Image(
             painter = painterResource(id = R.drawable.foto_fitur_sistem_pakar),
             contentDescription = "Hero Sistem Pakar",
@@ -54,23 +56,22 @@ fun HeroSection() {
             contentScale = ContentScale.Crop
         )
 
-        // 2. GRADIENT OVERLAY (Agar text tetap terbaca)
+        // 2. GRADIENT OVERLAY
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            Color.Black.copy(alpha = 0.6f), // Gelap di atas (Status Bar area)
-                            Color.Black.copy(alpha = 0.2f), // Tengah agak terang
-                            Color.Black.copy(alpha = 0.8f)  // Bawah gelap lagi
+                            Color.Black.copy(alpha = 0.6f),
+                            Color.Black.copy(alpha = 0.2f),
+                            Color.Black.copy(alpha = 0.8f)
                         )
                     )
                 )
         )
 
         // 3. TEKS KONTEN
-        // Menggunakan statusBarsPadding() agar teks turun otomatis di bawah jam/baterai
         Column(
             modifier = Modifier
                 .align(Alignment.Center)
@@ -78,7 +79,6 @@ fun HeroSection() {
                 .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Logo/Icon Box
             Box(
                 modifier = Modifier
                     .size(64.dp)
@@ -119,6 +119,7 @@ fun HeroSection() {
     }
 }
 
+// --- STEPPER SECTION TIDAK BERUBAH (SUDAH BENAR) ---
 @Composable
 fun StepperSection(activeStep: Int) {
     Card(
@@ -127,9 +128,9 @@ fun StepperSection(activeStep: Int) {
             .padding(horizontal = 20.dp, vertical = 24.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Row(
             modifier = Modifier
@@ -140,25 +141,23 @@ fun StepperSection(activeStep: Int) {
         ) {
             StepCircle(1, "Gejala", activeStep >= 1, activeStep == 1)
 
-            // Connector Line
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .height(2.dp)
                     .background(
-                        if (activeStep >= 2) Color(0xFF00BCD4) else Color(0xFFE0E0E0)
+                        if (activeStep >= 2) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
                     )
             )
 
             StepCircle(2, "Kondisi", activeStep >= 2, activeStep == 2)
 
-            // Connector Line
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .height(2.dp)
                     .background(
-                        if (activeStep >= 3) Color(0xFF00BCD4) else Color(0xFFE0E0E0)
+                        if (activeStep >= 3) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
                     )
             )
 
@@ -169,6 +168,18 @@ fun StepperSection(activeStep: Int) {
 
 @Composable
 fun StepCircle(number: Int, label: String, isCompleted: Boolean, isActive: Boolean) {
+    val backgroundColor = when {
+        isActive || isCompleted -> MaterialTheme.colorScheme.primary
+        else -> MaterialTheme.colorScheme.outlineVariant
+    }
+
+    val contentColor = when {
+        isActive || isCompleted -> MaterialTheme.colorScheme.onPrimary
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
+    val labelColor = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.padding(horizontal = 4.dp)
@@ -177,31 +188,14 @@ fun StepCircle(number: Int, label: String, isCompleted: Boolean, isActive: Boole
             modifier = Modifier
                 .size(48.dp)
                 .background(
-                    color = when {
-                        isActive -> Color(0xFF00BCD4)
-                        isCompleted -> Color(0xFF00BCD4)
-                        else -> Color(0xFFE0E0E0)
-                    },
+                    color = backgroundColor,
                     shape = CircleShape
-                )
-                .then(
-                    if (isActive) {
-                        Modifier.background(
-                            Brush.radialGradient(
-                                colors = listOf(
-                                    Color(0xFF00BCD4),
-                                    Color(0xFF0097A7)
-                                )
-                            ),
-                            shape = CircleShape
-                        )
-                    } else Modifier
                 ),
             contentAlignment = Alignment.Center
         ) {
             Text(
-                number.toString(),
-                color = if (isCompleted || isActive) Color.White else Color(0xFF9E9E9E),
+                text = number.toString(),
+                color = contentColor,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -210,10 +204,10 @@ fun StepCircle(number: Int, label: String, isCompleted: Boolean, isActive: Boole
         Spacer(Modifier.height(8.dp))
 
         Text(
-            label,
+            text = label,
             fontSize = 13.sp,
             fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal,
-            color = if (isActive) Color(0xFF00BCD4) else Color(0xFF666666)
+            color = labelColor
         )
     }
 }

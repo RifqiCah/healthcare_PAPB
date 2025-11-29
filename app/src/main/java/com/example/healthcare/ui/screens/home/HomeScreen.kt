@@ -38,44 +38,50 @@ fun HomeScreen(
 ) {
     var visible by remember { mutableStateOf(false) }
 
+    // --- STATE UNTUK DIALOG TENTANG KITA ---
+    var showAboutDialog by remember { mutableStateOf(false) }
+
     LaunchedEffect(Unit) {
         visible = true
     }
 
+    // --- STRUKTUR UTAMA ---
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        Color.Transparent, // Atas transparan biar gambar asli kelihatan
-                        MaterialTheme.colorScheme.primaryContainer, // Tengah Cyan
-                        MaterialTheme.colorScheme.surface //
-                    )
-                )
-            )
+
     ) {
-        Column(
+        // LAYER 1: BACKGROUND HEADER
+        AnimatedHeroSection(
+            modifier = Modifier.align(Alignment.TopCenter)
+        )
+
+        // LAYER 2: KONTEN UTAMA
+        Surface(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
-
-            horizontalAlignment = Alignment.CenterHorizontally
-
+                .padding(top = 270.dp)
+                .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)).background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primaryContainer, // Atas
+                            MaterialTheme.colorScheme.primaryContainer, // Tengah
+                            MaterialTheme.colorScheme.surface           // Bawah
+                        )
+                    )
+                ),
+            color = Color.Transparent,
         ) {
-            // Hero Section
-            AnimatedHeroSection()
-
-            // Content Section
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
-                // Welcome Card
+                // Welcome Card (Kita kirim aksi klik ke sini)
                 AnimatedVisibility(
                     visible = visible,
                     enter = fadeIn(animationSpec = tween(800, delayMillis = 100)) +
@@ -84,7 +90,10 @@ fun HomeScreen(
                                 initialOffsetY = { it / 3 }
                             )
                 ) {
-                    WelcomeCard()
+                    WelcomeCard(
+                        // ✅ SAAT DIKLIK, TAMPILKAN DIALOG
+                        onAboutClick = { showAboutDialog = true }
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -101,9 +110,9 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = Icons.Default.MedicalServices, // Ganti icon biar relevan
+                            imageVector = Icons.Default.MedicalServices,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary, // Cyan
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(24.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
@@ -117,7 +126,7 @@ fun HomeScreen(
                     }
                 }
 
-                // Service Cards
+                // Service Cards Logic
                 val services = listOf(
                     ServiceData(
                         "Sistem Pakar",
@@ -131,24 +140,23 @@ fun HomeScreen(
                         Icons.AutoMirrored.Filled.Article,
                         onArtikelClick
                     ),
+                    // TODO: Bagian Hasil Analisa nanti kita kerjakan setelah ini
                     ServiceData(
                         "Hasil Analisa",
                         "Lihat Riwayat Analisa Anda",
                         Icons.Default.Assessment,
-                        {}
+                        { /* Logika History Nanti */ }
                     )
                 )
 
                 services.forEachIndexed { index, service ->
                     var cardVisible by remember { mutableStateOf(false) }
-
                     LaunchedEffect(visible) {
                         if (visible) {
                             delay((300 + index * 100).toLong())
                             cardVisible = true
                         }
                     }
-
                     AnimatedVisibility(
                         visible = cardVisible,
                         enter = fadeIn(animationSpec = tween(500)) +
@@ -162,19 +170,71 @@ fun HomeScreen(
                             subtitle = service.subtitle,
                             icon = service.icon,
                             onClick = service.onClick,
-                            // Warna Ikon bervariasi tapi tetap dalam tema
                             iconColor = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
-
-                // SPACER PENTING UNTUK FLOATING NAVBAR
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(100.dp))
             }
+        }
+
+        // --- LAYER 3: POP UP DIALOG (JIKA showAboutDialog == true) ---
+        if (showAboutDialog) {
+            AboutAppDialog(
+                onDismiss = { showAboutDialog = false }
+            )
         }
     }
 }
 
+// --- COMPONENT BARU: DIALOG TENTANG KITA ---
+@Composable
+fun AboutAppDialog(onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(Icons.Default.LocalHospital, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+        },
+        title = {
+            Text(text = "Tentang Healthcare", fontWeight = FontWeight.Bold)
+        },
+        text = {
+            Column {
+                Text(
+                    text = "Aplikasi Healthcare Sistem Pakar v1.0",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Aplikasi ini dirancang untuk membantu Anda melakukan diagnosa awal penyakit berdasarkan gejala yang dirasakan menggunakan metode Sistem Pakar.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Fitur Utama:\n• Diagnosa Penyakit\n• Artikel Kesehatan\n• Riwayat Pemeriksaan",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onDismiss,
+                shape = RoundedCornerShape(50),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Text("Tutup")
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(24.dp)
+    )
+}
+
+// --- DATA CLASS ---
 data class ServiceData(
     val title: String,
     val subtitle: String,
@@ -182,8 +242,10 @@ data class ServiceData(
     val onClick: () -> Unit
 )
 
+// --- COMPONENTS LAINNYA ---
+
 @Composable
-fun AnimatedHeroSection() {
+fun AnimatedHeroSection(modifier: Modifier = Modifier) {
     val infiniteTransition = rememberInfiniteTransition(label = "hero")
     val scale by infiniteTransition.animateFloat(
         initialValue = 1f,
@@ -196,12 +258,10 @@ fun AnimatedHeroSection() {
     )
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(300.dp)
-            .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
     ) {
-        // Background Image
         Image(
             painter = painterResource(id = R.drawable.background),
             contentDescription = "Healthcare Background",
@@ -211,34 +271,17 @@ fun AnimatedHeroSection() {
             contentScale = ContentScale.Crop
         )
 
-        // Gradient Overlay (Lebih ke Biru Tua/Cyan biar teks putih kebaca)
-//        Box(
-//            modifier = Modifier
-//                .fillMaxSize()
-//                .background(
-//                    Brush.verticalGradient(
-//                        colors = listOf(
-//                            Color.Transparent, // Atas transparan biar gambar asli kelihatan
-//                            MaterialTheme.colorScheme.primary.copy(alpha = 0.3f), // Tengah Cyan
-//                            MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f) // Bawah Biru Tua
-//                        )
-//                    )
-//                )
-//        )
-
-        // Content
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(16.dp)
+                .statusBarsPadding(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         )
         {
             PulsingHealthIcon()
-
             Spacer(modifier = Modifier.height(16.dp))
-
             Text(
                 text = "HEALTH CARE",
                 color = Color.White,
@@ -248,9 +291,7 @@ fun AnimatedHeroSection() {
                 ),
                 textAlign = TextAlign.Center
             )
-
             Spacer(modifier = Modifier.height(8.dp))
-
             Text(
                 text = "Solusi Kesehatan Digital Terpercaya",
                 color = Color.White.copy(alpha = 0.9f),
@@ -294,58 +335,108 @@ fun PulsingHealthIcon() {
 }
 
 @Composable
-fun WelcomeCard() {
-    // Card Putih Bersih di atas background abu muda
+fun WelcomeCard(
+    onAboutClick: () -> Unit
+) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background), //putih
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp), // Tambah sedikit margin vertikal
+        shape = RoundedCornerShape(24.dp), // Sudut lebih bulat
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp), // Tambah elevasi agar "pop up"
+        colors = CardDefaults.cardColors(
+            containerColor = Color.Transparent // Transparent agar gradient di bawahnya terlihat
+        )
     ) {
-        Column(
-            modifier = Modifier.padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "SELAMAT DATANG",
-                style = MaterialTheme.typography.labelLarge.copy(
-                    fontWeight = FontWeight.SemiBold,
-                    letterSpacing = 2.sp
-                ),
-                color = MaterialTheme.colorScheme.secondary // Biru Tua
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text(
-                text = "DI HEALTHCARE",
-                style = MaterialTheme.typography.headlineSmall.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                color = MaterialTheme.colorScheme.primary // Cyan
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Button(
-                onClick = { /* TODO: Navigasi */ },
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.height(48.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary, // Tombol Cyan
-                    contentColor = MaterialTheme.colorScheme.onPrimary // Teks Putih
+        // BOX UTAMA UNTUK LAYER BACKGROUND & KONTEN
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                // BACKGROUND GRADIENT (Kombinasi Cyan ke Biru Muda)
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary,       // Cyan (Kiri Atas)
+                            MaterialTheme.colorScheme.secondaryContainer, // Biru Muda (Kanan Bawah)
+                        ),
+                        start = androidx.compose.ui.geometry.Offset(0f, 0f),
+                        end = androidx.compose.ui.geometry.Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
+                    )
                 )
+        ) {
+            // LAYER 1: BACKGROUND PATTERN / DEKORASI (Opsional, menggunakan Ikon besar transparan)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(180.dp), // Sesuaikan tinggi
+                contentAlignment = Alignment.CenterEnd
             ) {
                 Icon(
-                    imageVector = Icons.Default.Info,
+                    imageVector = Icons.Default.MedicalServices, // Ikon latar belakang
                     contentDescription = null,
-                    modifier = Modifier.size(20.dp)
+                    tint = Color.White.copy(alpha = 0.4f), // Sangat transparan
+                    modifier = Modifier
+                        .size(160.dp)
+                        .offset(x = 40.dp, y = (-20).dp) // Geser sedikit keluar
+                        .scale(1.2f)
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+            }
+
+            // LAYER 2: KONTEN TEKS & TOMBOL
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally // Rata kiri agar lebih dinamis dengan background
+            ) {
+
                 Text(
-                    "Tentang Kita",
-                    style = MaterialTheme.typography.labelLarge
+                    text = "Health Care",
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontWeight = FontWeight.ExtraBold, // Lebih tebal
+                        letterSpacing = 2.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onPrimary
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Teman setia jaga kesehatanmu setiap hari.",
+                    style = MaterialTheme.typography.labelLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 1f)
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // TOMBOL TENTANG KITA (Lebih Menonjol)
+                Button(
+                    onClick = onAboutClick,
+                    shape = RoundedCornerShape(50), // Bentuk kapsul
+                    modifier = Modifier.height(50.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surface, // Tombol putih
+                        contentColor = MaterialTheme.colorScheme.primary // Teks Cyan
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(
+                        defaultElevation = 4.dp,
+                        pressedElevation = 2.dp
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        "Tentang Kita",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                    )
+                }
             }
         }
     }
@@ -377,7 +468,6 @@ fun ModernServiceCard(
             .padding(vertical = 8.dp)
             .scale(scale),
         shape = RoundedCornerShape(20.dp),
-        // Gunakan Surface/Putih untuk kartu agar terlihat menonjol
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -387,11 +477,10 @@ fun ModernServiceCard(
                 .padding(20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Icon Container
             Surface(
                 modifier = Modifier.size(56.dp),
                 shape = RoundedCornerShape(14.dp),
-                color = iconColor.copy(alpha = 0.1f) // Warna background ikon pudar
+                color = iconColor.copy(alpha = 0.1f)
             ) {
                 Box(
                     contentAlignment = Alignment.Center,
@@ -400,7 +489,7 @@ fun ModernServiceCard(
                     Icon(
                         imageVector = icon,
                         contentDescription = null,
-                        tint = iconColor, // Warna ikon asli
+                        tint = iconColor,
                         modifier = Modifier.size(28.dp)
                     )
                 }
@@ -408,7 +497,6 @@ fun ModernServiceCard(
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            // Text Content
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
@@ -425,7 +513,6 @@ fun ModernServiceCard(
                 )
             }
 
-            // Arrow Icon
             Icon(
                 imageVector = Icons.Default.ArrowForward,
                 contentDescription = null,

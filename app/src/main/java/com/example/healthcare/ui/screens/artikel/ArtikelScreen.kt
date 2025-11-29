@@ -59,158 +59,192 @@ fun ArtikelScreen(
         }
     }
 
-    // Box dengan background gradient untuk seluruh halaman
+    // --- STRUKTUR UTAMA (LAYER STACKING) ---
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        Color.Transparent, // Atas transparan biar gambar asli kelihatan
-                        MaterialTheme.colorScheme.primaryContainer, // Tengah Cyan
-                        MaterialTheme.colorScheme.surface // Bawah
-                    )
-                )
-            )
+
     ) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
+
+        // ==========================================================
+        // LAYER 1: BACKGROUND HEADER (GAMBAR)
+        // ==========================================================
+        AnimatedHeroSection(
+            modifier = Modifier.align(Alignment.TopCenter)
+        )
+
+        // ==========================================================
+        // LAYER 2: KONTEN UTAMA (LEMBARAN MELENGKUNG)
+        // ==========================================================
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                // Turunkan 270dp agar gambar Hero (300dp) terlihat sebagian
+                .padding(top = 270.dp)
+                // Lengkungan sudut atas
+                .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primaryContainer, // Atas
+                            MaterialTheme.colorScheme.primaryContainer, // Tengah
+                            MaterialTheme.colorScheme.surface           // Bawah
+                        )
+                    )
+                ),
+            color = Color.Transparent
         ) {
-            /** --- 1. HERO SECTION (Full Immersive) --- **/
-            item {
-                AnimatedHeroSection()
-                Spacer(modifier = Modifier.height(24.dp))
-            }
-
-            /** --- 2. Search Bar --- **/
-            item {
-                ModernSearchBar(
-                    searchQuery = searchQuery,
-                    onSearchChange = { searchQuery = it },
-                    isActive = isSearchActive,
-                    onActiveChange = { isSearchActive = it },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp)
-                )
-                Spacer(modifier = Modifier.height(20.dp))
-            }
-
-            /** --- 3. Category Chips --- **/
-            item {
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(horizontal = 20.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    items(categories) { category ->
-                        CategoryChip(
-                            text = category,
-                            isSelected = category == uiState.selectedCategory,
-                            onClick = { viewModel.fetchArticles(category) }
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(24.dp))
-            }
-
-            /** --- 4. Content Logic --- **/
-            if (uiState.isLoading && uiState.articles.isEmpty()) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Top,
+                // Beri padding bawah agar konten terakhir tidak tertutup navigation bar (jika ada)
+                contentPadding = PaddingValues(bottom = 24.dp)
+            ) {
+                // 1. SPACER ATAS (Agar konten tidak nempel lengkungan)
                 item {
-                    Box(
+                    Spacer(modifier = Modifier.height(32.dp))
+                }
+
+                // 2. SEARCH BAR
+                item {
+                    ModernSearchBar(
+                        searchQuery = searchQuery,
+                        onSearchChange = { searchQuery = it },
+                        isActive = isSearchActive,
+                        onActiveChange = { isSearchActive = it },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(200.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                }
-            } else if (uiState.error != null && uiState.articles.isEmpty()) {
-                item {
-                    ErrorSection(
-                        message = uiState.error ?: "Terjadi Kesalahan",
-                        onRetry = { viewModel.refresh() }
+                            .padding(horizontal = 20.dp)
                     )
-                }
-            } else {
-                // Header Text
-                item {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Berita Terbaru",
-                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                        )
-                        Text(
-                            text = "${displayedArticles.size} artikel",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
                 }
 
-                if (displayedArticles.isEmpty()) {
+                // 3. CATEGORY CHIPS
+                item {
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(horizontal = 20.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        items(categories) { category ->
+                            CategoryChip(
+                                text = category,
+                                isSelected = category == uiState.selectedCategory,
+                                onClick = { viewModel.fetchArticles(category) }
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
+
+                // 4. CONTENT LOGIC
+                if (uiState.isLoading && uiState.articles.isEmpty()) {
                     item {
-                        Text(
-                            text = "Tidak ada artikel ditemukan.",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(20.dp),
-                            textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.outline
-                        )
-                    }
-                }
-
-                // Article List
-                itemsIndexed(displayedArticles) { index, article ->
-                    AnimatedArticleCard(
-                        article = article,
-                        index = index,
-                        onClick = { onArtikelDetailClick(article.id) }
-                    )
-                }
-
-                // Load More Button
-                item {
-                    if (uiState.nextPageToken != null && searchQuery.isBlank()) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(24.dp),
+                                .height(200.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            if (uiState.isLoading) {
-                                CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                            } else {
-                                OutlinedButton(
-                                    onClick = { viewModel.loadMore() },
-                                    shape = RoundedCornerShape(50)
-                                ) {
-                                    Text("Muat Lebih Banyak")
+                            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                        }
+                    }
+                } else if (uiState.error != null && uiState.articles.isEmpty()) {
+                    item {
+                        ErrorSection(
+                            message = uiState.error ?: "Terjadi Kesalahan",
+                            onRetry = { viewModel.refresh() }
+                        )
+                    }
+                } else {
+                    // Header Text
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Berita Terbaru",
+                                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                            Text(
+                                text = "${displayedArticles.size} artikel",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+
+                    if (displayedArticles.isEmpty()) {
+                        item {
+                            Text(
+                                text = "Tidak ada artikel ditemukan.",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(20.dp),
+                                textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.outline
+                            )
+                        }
+                    }
+
+                    // Article List
+                    itemsIndexed(displayedArticles) { index, article ->
+                        AnimatedArticleCard(
+                            article = article,
+                            index = index,
+                            onClick = { onArtikelDetailClick(article.id) }
+                        )
+                    }
+
+                    // Load More Button
+                    item {
+                        if (uiState.nextPageToken != null && searchQuery.isBlank()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(24.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (uiState.isLoading) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(24.dp),
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                } else {
+                                    OutlinedButton(
+                                        onClick = { viewModel.loadMore() },
+                                        shape = RoundedCornerShape(50),
+                                        colors = ButtonDefaults.outlinedButtonColors(
+                                            contentColor = MaterialTheme.colorScheme.primary
+                                        ),
+                                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
+                                    ) {
+                                        Text("Muat Lebih Banyak")
+                                    }
                                 }
                             }
                         }
+                        // Spacer bawah extra agar scroll bisa mentok
+                        Spacer(modifier = Modifier.height(80.dp))
                     }
-                    Spacer(modifier = Modifier.height(80.dp))
                 }
             }
         }
     }
 }
 
-/** --- ANIMATED HERO SECTION (VERSI IMMERSIVE TANPA OVERLAY) --- **/
+/** --- ANIMATED HERO SECTION (BACKGROUND) --- **/
 @Composable
-fun AnimatedHeroSection() {
+fun AnimatedHeroSection(
+    modifier: Modifier = Modifier // Ditambahkan parameter modifier
+) {
     val infiniteTransition = rememberInfiniteTransition(label = "hero")
     val scale by infiniteTransition.animateFloat(
         initialValue = 1f,
@@ -222,13 +256,14 @@ fun AnimatedHeroSection() {
         label = "scale"
     )
 
+    // Box ini sekarang menjadi Layer Belakang (Persegi Panjang Penuh)
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(300.dp)
-            .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
+        // Hapus .clip() agar tidak melengkung di bawah
     ) {
-        // 1. GAMBAR BACKGROUND (Memenuhi Box)
+        // 1. GAMBAR BACKGROUND
         Image(
             painter = painterResource(id = R.drawable.bg_artikel),
             contentDescription = "Header Artikel",
@@ -238,7 +273,19 @@ fun AnimatedHeroSection() {
             contentScale = ContentScale.Crop
         )
 
-        // 2. Tidak ada overlay gradient lagi - gradient sudah di background halaman
+        // 2. GRADIENT OVERLAY (Agar teks terbaca)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Black.copy(alpha = 0.6f),
+                            Color.Black.copy(alpha = 0.3f)
+                        )
+                    )
+                )
+        )
 
         // 3. TEKS KONTEN
         Column(
@@ -268,6 +315,8 @@ fun AnimatedHeroSection() {
     }
 }
 
+// --- KOMPONEN LAINNYA (SAMA SEPERTI SEBELUMNYA) ---
+
 @Composable
 fun ErrorSection(message: String, onRetry: () -> Unit) {
     Column(
@@ -289,8 +338,11 @@ fun ErrorSection(message: String, onRetry: () -> Unit) {
             color = MaterialTheme.colorScheme.error
         )
         Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = onRetry) {
-            Text("Coba Lagi")
+        Button(
+            onClick = onRetry,
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+        ) {
+            Text("Coba Lagi", color = MaterialTheme.colorScheme.onError)
         }
     }
 }
@@ -306,8 +358,8 @@ fun ModernSearchBar(
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
-        tonalElevation = 2.dp
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), // Sedikit transparan
+        tonalElevation = 0.dp
     ) {
         Row(
             modifier = Modifier
@@ -402,7 +454,9 @@ fun AnimatedArticleCard(
             initialOffsetY = { it / 2 }
         )
     ) {
+        // Variabel ini hanya hidup di dalam blok AnimatedVisibility ini
         var isPressed by remember { mutableStateOf(false) }
+
         val scale by animateFloatAsState(
             targetValue = if (isPressed) 0.97f else 1f,
             animationSpec = spring(stiffness = Spring.StiffnessMedium),
@@ -410,7 +464,10 @@ fun AnimatedArticleCard(
         )
 
         Card(
-            onClick = onClick,
+            onClick = {
+                isPressed = true
+                onClick()
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp, vertical = 8.dp)
@@ -428,7 +485,7 @@ fun AnimatedArticleCard(
                         .width(120.dp)
                         .height(140.dp)
                         .clip(RoundedCornerShape(topStart = 20.dp, bottomStart = 20.dp))
-                        .background(Color.Gray.copy(alpha = 0.2f))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     if (article.urlToImage != null) {
                         AsyncImage(
@@ -478,7 +535,8 @@ fun AnimatedArticleCard(
                             lineHeight = 20.sp
                         ),
                         maxLines = 3,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
 
                     Spacer(modifier = Modifier.weight(1f))
@@ -513,6 +571,14 @@ fun AnimatedArticleCard(
                         )
                     }
                 }
+            }
+        }
+
+        // ✅ PERBAIKAN: LaunchedEffect dipindah ke SINI (masih di dalam blok AnimatedVisibility)
+        LaunchedEffect(isPressed) {
+            if (isPressed) {
+                delay(100)
+                isPressed = false
             }
         }
     }

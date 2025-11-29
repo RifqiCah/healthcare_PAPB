@@ -4,10 +4,9 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
@@ -39,192 +38,270 @@ fun ReadArtikelScreen(
         itemId?.let { viewModel.getArticleDetail(it) }
     }
     val context = LocalContext.current
-    val scrollState = rememberScrollState()
 
-    // KITA GANTI SCAFFOLD DENGAN BOX UTAMA (IMMERSIVE LAYOUT)
-    Box(modifier = Modifier.fillMaxSize()) {
-
-        // === LAYER 1: KONTEN SCROLLABLE ===
+    // --- STRUKTUR UTAMA (LAYER STACKING - Qpon Style) ---
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.primaryContainer, // Atas
+                        MaterialTheme.colorScheme.primaryContainer, // Tengah
+                        MaterialTheme.colorScheme.surface           // Bawah
+                    )
+                )
+            )
+    ) {
         if (article != null) {
-            Column(
+            // ==========================================================
+            // LAYER 1: BACKGROUND IMAGE
+            // ==========================================================
+            Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(scrollState)
+                    .fillMaxWidth()
+                    .height(400.dp) // Tinggi gambar background
+                    .align(Alignment.TopCenter)
             ) {
-                // --- HEADER IMAGE (Full Screen Width) ---
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(380.dp) // Tinggi gambar dibuat megah
-                ) {
-                    if (article.urlToImage != null) {
-                        AsyncImage(
-                            model = article.urlToImage,
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    } else {
-                        Box(modifier = Modifier.fillMaxSize().background(Color.Gray))
-                    }
-
-                    // Gradient Bawah (Supaya Judul Terbaca)
+                if (article.urlToImage != null) {
+                    AsyncImage(
+                        model = article.urlToImage,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(
-                                Brush.verticalGradient(
-                                    colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.9f)),
-                                    startY = 400f
-                                )
-                            )
+                            .background(MaterialTheme.colorScheme.primaryContainer)
                     )
+                }
 
-                    // Judul & Metadata di atas Gambar
-                    Column(
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(horizontal = 20.dp, vertical = 40.dp) // Padding bawah dilebihkan dikit
-                    ) {
-                        // Row Kategori & Sumber
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = article.category ?: "Umum",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                modifier = Modifier
-                                    .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(6.dp))
-                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                // Gradient Overlay (Agar teks kategori di atas gambar terbaca)
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    Color.Black.copy(alpha = 0.7f)
+                                ),
+                                startY = 300f // Mulai gelap dari tengah ke bawah
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
+                        )
+                )
+
+                // Info Kategori & Source (Tampil di atas gambar, di belakang Sheet)
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(horizontal = 24.dp)
+                        .padding(bottom = 60.dp) // Padding besar agar muncul di atas Sheet
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.primary
+                        ) {
                             Text(
-                                text = article.sourceName ?: "News",
+                                text = article.category ?: "Kesehatan",
                                 style = MaterialTheme.typography.labelMedium,
-                                color = Color.White.copy(alpha = 0.9f),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                                 fontWeight = FontWeight.Bold
                             )
                         }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
+                        Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = article.title ?: "Tanpa Judul",
-                            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-                            color = Color.White,
-                            lineHeight = 32.sp
-                        )
-                    }
-                }
-
-                // --- BODY CONTENT (Putih) ---
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .offset(y = (-24).dp) // Efek Overlap ke atas gambar
-                        .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
-                        .background(MaterialTheme.colorScheme.background)
-                        .padding(24.dp)
-                ) {
-                    // Visual Handle (Garis kecil)
-                    Box(
-                        modifier = Modifier
-                            .width(40.dp)
-                            .height(4.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(Color.Gray.copy(alpha = 0.3f))
-                            .align(Alignment.CenterHorizontally)
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    // Info Penulis & Tanggal
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Person, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = article.author ?: "Redaksi",
+                            text = article.sourceName ?: "News",
                             style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
-                        Spacer(modifier = Modifier.weight(1f))
-                        Icon(Icons.Default.DateRange, null, tint = Color.Gray, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = article.publishedAt?.take(10) ?: "",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.Gray
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
                         )
                     }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    // Deskripsi & Konten
-                    Text(
-                        text = article.description ?: "Tidak ada deskripsi.",
-                        style = MaterialTheme.typography.bodyLarge.copy(lineHeight = 28.sp),
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    if (!article.content.isNullOrEmpty()) {
-                        Text(
-                            text = article.content,
-                            style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 24.sp),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(32.dp))
-
-                    // Tombol Web
-                    Button(
-                        onClick = {
-                            if (!article.url.isNullOrEmpty()) {
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(article.url))
-                                context.startActivity(intent)
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth().height(50.dp),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text("Baca Selengkapnya")
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Icon(Icons.Default.Link, null)
-                    }
-
-                    Spacer(modifier = Modifier.height(50.dp)) // Spacer Bawah
                 }
             }
+
+            // ==========================================================
+            // LAYER 2: KONTEN UTAMA (LEMBARAN MELENGKUNG)
+            // ==========================================================
+            Surface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    // Turunkan sheet agar gambar terlihat di atasnya
+                    .padding(top = 360.dp)
+                    // Lengkungan sudut atas
+                    .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)),
+                color = MaterialTheme.colorScheme.background
+            ) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(24.dp)
+                ) {
+                    // 1. Handle Bar (Garis kecil visual)
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .width(40.dp)
+                                    .height(4.dp)
+                                    .clip(RoundedCornerShape(2.dp))
+                                    .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(20.dp))
+                    }
+
+                    // 2. JUDUL ARTIKEL
+                    item {
+                        Text(
+                            text = article.title ?: "Tanpa Judul",
+                            style = MaterialTheme.typography.headlineSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                lineHeight = 32.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+
+                    // 3. METADATA (Penulis & Tanggal)
+                    item {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = article.author ?: "Redaksi",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                fontWeight = FontWeight.Medium
+                            )
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            Icon(
+                                imageVector = Icons.Default.DateRange,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = article.publishedAt?.take(10) ?: "",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                        Spacer(modifier = Modifier.height(24.dp))
+                    }
+
+                    // 4. ISI KONTEN
+                    item {
+                        if (!article.description.isNullOrEmpty()) {
+                            Text(
+                                text = article.description,
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    lineHeight = 26.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.9f)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
+
+                        if (!article.content.isNullOrEmpty()) {
+                            Text(
+                                text = article.content,
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    lineHeight = 28.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        } else {
+                            Text(
+                                text = "Baca selengkapnya di situs asli...",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(32.dp))
+                    }
+
+                    // 5. TOMBOL WEB
+                    item {
+                        Button(
+                            onClick = {
+                                if (!article.url.isNullOrEmpty()) {
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(article.url))
+                                    context.startActivity(intent)
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(54.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            )
+                        ) {
+                            Text(
+                                text = "Baca Selengkapnya",
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Icon(Icons.Default.Link, null)
+                        }
+                        Spacer(modifier = Modifier.height(50.dp))
+                    }
+                }
+            }
+
         } else {
-            // State Error / Not Found
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Artikel tidak ditemukan", color = Color.Gray)
+            // State Loading / Error
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                if (article == null) {
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                } else {
+                    Text("Artikel tidak ditemukan", color = MaterialTheme.colorScheme.outline)
+                }
             }
         }
 
-        // === LAYER 2: NAVIGATION BAR & SCRIM (OVERLAY) ===
-        // Ini rahasia tampilan modern agar Jam/Baterai tetap terlihat
+        // ==========================================================
+        // LAYER 3: NAVIGATION BAR (FLOATING)
+        // ==========================================================
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                // Gradient Hitam di Atas (Scrim)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(Color.Black.copy(alpha = 0.6f), Color.Transparent),
-                        startY = 0f,
-                        endY = 150f
-                    )
-                )
-                .statusBarsPadding() // Turunkan agar tidak nabrak jam
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .statusBarsPadding()
+                .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
                 onClick = onBackClick,
                 modifier = Modifier
-                    .background(Color.White.copy(alpha = 0.2f), CircleShape) // Efek Kaca (Glass)
-                    .size(40.dp)
+                    .background(
+                        color = Color.Black.copy(alpha = 0.4f), // Semi-transparent black
+                        shape = CircleShape
+                    )
+                    .size(44.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
