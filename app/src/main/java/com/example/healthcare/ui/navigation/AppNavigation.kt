@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -45,7 +44,6 @@ fun AppNavigation() {
         if (auth.currentUser != null) {
             action()
         } else {
-            // Tampilkan dialog jika user mencoba mengakses fitur berbayar
             showLoginDialog = true
         }
     }
@@ -70,10 +68,8 @@ fun AppNavigation() {
             content()
         } else {
             LaunchedEffect(Unit) {
-                // Logika GUARD (hanya menampilkan dialog)
                 showLoginDialog = true
             }
-            // Tampilkan Composable kosong sementara dialog muncul.
             Box(modifier = Modifier.fillMaxSize())
         }
     }
@@ -111,7 +107,7 @@ fun AppNavigation() {
             ForgotPasswordScreen(onBackClick = { navController.popBackStack() })
         }
 
-        // == HOME SCREEN (Akses Guest Diizinkan) ==
+        // == HOME SCREEN ==
         composable(AppRoutes.HOME_SCREEN) {
             Scaffold(
                 bottomBar = {
@@ -124,8 +120,7 @@ fun AppNavigation() {
                         .fillMaxSize(),
                     onSistemPakarClick = {
                         checkAuthAndNavigate {
-                            // REVISI: Langsung navigasi ke sub-graph flow diagnosa
-                            navController.navigate("sistem_pakar_flow")
+                            navController.navigate(AppRoutes.SISTEM_PAKAR_SCREEN)
                         }
                     },
                     onArtikelClick = {
@@ -137,7 +132,7 @@ fun AppNavigation() {
             }
         }
 
-        // == PROFILE (Dilindungi) ==
+        // == PROFILE ==
         composable(AppRoutes.PROFILE_SCREEN) {
             LoginGuardScreen {
                 Scaffold(
@@ -159,7 +154,7 @@ fun AppNavigation() {
             }
         }
 
-        // == ARTIKEL (Dilindungi) ==
+        // == ARTIKEL ==
         composable(AppRoutes.ARTIKEL_SCREEN) {
             LoginGuardScreen {
                 Scaffold(
@@ -180,7 +175,7 @@ fun AppNavigation() {
             }
         }
 
-        // == ARTIKEL DETAIL (Dilindungi) ==
+        // == ARTIKEL DETAIL ==
         composable(
             route = AppRoutes.ARTIKEL_DETAIL_SCREEN,
             arguments = listOf(
@@ -198,7 +193,7 @@ fun AppNavigation() {
             }
         }
 
-        // == SISTEM PAKAR (Dilindungi) ==
+        // == SISTEM PAKAR (DASHBOARD) ==
         composable(AppRoutes.SISTEM_PAKAR_SCREEN) {
             LoginGuardScreen {
                 Scaffold(
@@ -210,7 +205,6 @@ fun AppNavigation() {
                         modifier = Modifier
                             .padding(paddingValues)
                             .fillMaxSize(),
-                        // REVISI: Langsung navigasi ke sub-graph flow diagnosa
                         onMulaiClick = { navController.navigate("sistem_pakar_flow") },
                         onBackClick = { navController.popBackStack() }
                     )
@@ -218,9 +212,7 @@ fun AppNavigation() {
             }
         }
 
-        // ** INFO_SCREEN DIHAPUS **
-
-        // == FLOW DIAGNOSA ==
+        // == FLOW DIAGNOSA (SUB-GRAPH) ==
         navigation(
             startDestination = AppRoutes.GEJALA_SCREEN,
             route = "sistem_pakar_flow"
@@ -278,9 +270,10 @@ fun AppNavigation() {
                         onBackClick = { navController.popBackStack() },
                         onSelesaiClick = {
                             vm.saveResultToHistory()
+                            // Kembali ke Dashboard (Menutup Flow Diagnosa)
                             navController.popBackStack(
-                                route = AppRoutes.SISTEM_PAKAR_SCREEN,
-                                inclusive = false
+                                route = "sistem_pakar_flow",
+                                inclusive = true
                             )
                         }
                     )

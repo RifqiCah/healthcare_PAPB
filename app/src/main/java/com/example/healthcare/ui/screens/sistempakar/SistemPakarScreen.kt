@@ -1,23 +1,25 @@
 package com.example.healthcare.ui.screens.sistempakar
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -25,6 +27,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.compose.animation.core.*
+import com.example.healthcare.R
 import com.example.healthcare.viewmodel.SistemPakarViewModel
 import com.example.healthcare.domain.model.DiagnosisHistory
 
@@ -32,13 +36,17 @@ import com.example.healthcare.domain.model.DiagnosisHistory
 fun SistemPakarScreen(
     modifier: Modifier = Modifier,
     onMulaiClick: () -> Unit,
-    onBackClick: () -> Unit, // (Opsional jika ingin tombol back di header)
+    onBackClick: () -> Unit,
     viewModel: SistemPakarViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val historyList = uiState.historyList
 
-    // --- AUTO REFRESH HISTORY SAAT KEMBALI KE LAYAR INI ---
+    // --- STATE UNTUK DIALOG HAPUS ---
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var itemToDeleteId by remember { mutableStateOf<String?>(null) }
+
+    // --- AUTO REFRESH HISTORY ---
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -52,36 +60,26 @@ fun SistemPakarScreen(
         }
     }
 
-    // --- STRUKTUR UTAMA (LAYER STACKING - Qpon Style) ---
+    // --- STRUKTUR UTAMA (LAYER STACKING) ---
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-
+        modifier = modifier.fillMaxSize()
     ) {
 
-        // ==========================================================
-        // LAYER 1: BACKGROUND HEADER (GAMBAR)
-        // ==========================================================
+
         HeroSection(
             modifier = Modifier.align(Alignment.TopCenter)
         )
-
-        // ==========================================================
-        // LAYER 2: KONTEN UTAMA (LEMBARAN MELENGKUNG)
-        // ==========================================================
         Surface(
             modifier = Modifier
                 .fillMaxSize()
-                // Turunkan 270dp agar gambar Hero (300dp) terlihat
-                .padding(top = 270.dp)
-                // Lengkungan sudut atas
+                .padding(top = 270.dp) // Turunkan agar gambar Hero terlihat
                 .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
                 .background(
                     brush = Brush.verticalGradient(
                         colors = listOf(
-                            MaterialTheme.colorScheme.primaryContainer, // Atas
-                            MaterialTheme.colorScheme.primaryContainer, // Tengah
-                            MaterialTheme.colorScheme.surface           // Bawah
+                            MaterialTheme.colorScheme.primaryContainer,
+                            MaterialTheme.colorScheme.primaryContainer,
+                            MaterialTheme.colorScheme.surface
                         )
                     )
                 ),
@@ -92,18 +90,15 @@ fun SistemPakarScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 contentPadding = PaddingValues(bottom = 24.dp)
             ) {
-                // 1. Spacer agar konten tidak terlalu nempel ke lengkungan atas
-                item {
-                    Spacer(modifier = Modifier.height(32.dp))
-                }
+                // Spacer Header
+                item { Spacer(modifier = Modifier.height(32.dp)) }
 
-                // 2. KARTU "MULAI PENGECEKAN"
-                item {
-                    StartCheckupCard(onMulaiClick = onMulaiClick)
-                    Spacer(modifier = Modifier.height(24.dp))
-                }
+                // KARTU "MULAI PENGECEKAN"
+                item { StartCheckupCard(onMulaiClick = onMulaiClick) }
 
-                // 3. HEADER RIWAYAT
+                item { Spacer(modifier = Modifier.height(32.dp)) }
+
+                // HEADER RIWAYAT
                 item {
                     Row(
                         modifier = Modifier
@@ -111,12 +106,19 @@ fun SistemPakarScreen(
                             .padding(horizontal = 20.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.History,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Surface(
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.History,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(8.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
                         Text(
                             text = "Riwayat Pengecekan",
                             style = MaterialTheme.typography.titleLarge,
@@ -127,104 +129,172 @@ fun SistemPakarScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
-                // 4. LIST RIWAYAT / EMPTY STATE
-                if (historyList.isEmpty()) {
+                // ✅ PERBAIKAN UTAMA: LOGIKA LOADING
+                if (uiState.isLoading) {
+                    // Tampilkan Loading Spinner saat data sedang diambil
                     item {
-                        EmptyHistoryState()
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                        }
                     }
+                } else if (historyList.isEmpty()) {
+                    // Tampilkan Empty State jika data benar-benar kosong
+                    item { EmptyHistoryState() }
                 } else {
-                    // Header Tabel
-                    item {
-                        HistoryTableHeader()
-                    }
+                    // Tampilkan Data jika sudah ada
+                    item { HistoryTableHeader() }
 
-                    // Isi Tabel
                     itemsIndexed(historyList) { index, item ->
-                        HistoryRowItem(item = item, isLast = index == historyList.lastIndex)
+                        HistoryRowItem(
+                            item = item,
+                            isLast = index == historyList.lastIndex,
+                            onDeleteClick = {
+                                itemToDeleteId = item.id
+                                showDeleteDialog = true
+                            }
+                        )
                     }
                 }
+
+                // Spacer Bawah
+                item { Spacer(modifier = Modifier.height(80.dp)) }
             }
+        }
+
+        // LAYER 3: DIALOG KONFIRMASI HAPUS
+        if (showDeleteDialog) {
+            AlertDialog(
+                onDismissRequest = { showDeleteDialog = false },
+                icon = { Icon(Icons.Default.DeleteForever, null, tint = MaterialTheme.colorScheme.error) },
+                title = { Text("Hapus Riwayat?") },
+                text = { Text("Data diagnosa ini akan dihapus permanen dari database.") },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            itemToDeleteId?.let { id ->
+                                viewModel.deleteHistoryItem(id)
+                            }
+                            showDeleteDialog = false
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                    ) {
+                        Text("Hapus")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeleteDialog = false }) {
+                        Text("Batal")
+                    }
+                },
+                containerColor = MaterialTheme.colorScheme.surface
+            )
         }
     }
 }
 
-// --- KOMPONEN: KARTU MULAI ---
+// ==========================================
+// KUMPULAN KOMPONEN (HELPER COMPOSABLES)
+// ==========================================
+
+
 @Composable
 fun StartCheckupCard(onMulaiClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp),
-        shape = RoundedCornerShape(20.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+        shape = RoundedCornerShape(24.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary,
+                            MaterialTheme.colorScheme.secondaryContainer
+                        )
+                    )
+                )
         ) {
-            Icon(
-                imageVector = Icons.Default.LocalHospital,
-                contentDescription = null,
-                modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = "Pengecekan Gejala Kesehatan",
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            HorizontalDivider(
-                modifier = Modifier
-                    .fillMaxWidth(0.3f)
-                    .padding(vertical = 8.dp),
-                thickness = 3.dp,
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-            )
-
-            Text(
-                text = "Dapatkan informasi awal tentang kondisi kesehatan Anda berdasarkan gejala yang dialami.",
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Button(
-                onClick = onMulaiClick,
+            // Dekorasi Icon Transparan
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
+                    .height(220.dp),
+                contentAlignment = Alignment.TopEnd
             ) {
                 Icon(
-                    imageVector = Icons.Default.PlayArrow,
+                    imageVector = Icons.Default.LocalHospital,
                     contentDescription = null,
-                    modifier = Modifier.size(20.dp)
+                    tint = Color.White.copy(alpha = 0.1f),
+                    modifier = Modifier
+                        .size(180.dp)
+                        .offset(x = 40.dp, y = (-30).dp)
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+            }
+
+            // Konten Kartu
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Text(
-                    text = "Mulai Analisa",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                    text = "Cek Kesehatan Anda",
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = MaterialTheme.colorScheme.onPrimary
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Dapatkan informasi awal tentang kondisi kesehatan Anda berdasarkan gejala yang dialami.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Button(
+                    onClick = onMulaiClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(54.dp),
+                    shape = RoundedCornerShape(50),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        contentColor = MaterialTheme.colorScheme.primary
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.PlayArrow,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Mulai Analisa Sekarang",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                    )
+                }
             }
         }
     }
 }
 
-// --- KOMPONEN: EMPTY STATE ---
 @Composable
 fun EmptyHistoryState() {
     Box(
@@ -250,14 +320,13 @@ fun EmptyHistoryState() {
     }
 }
 
-// --- KOMPONEN: TABLE HEADER ---
 @Composable
 fun HistoryTableHeader() {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp)
-            .padding(bottom = 8.dp), // Sedikit jarak dengan item pertama
+            .padding(bottom = 8.dp),
         shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp, bottomStart = 4.dp, bottomEnd = 4.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
     ) {
@@ -267,33 +336,18 @@ fun HistoryTableHeader() {
                 .padding(vertical = 12.dp, horizontal = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                "Tanggal",
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-                modifier = Modifier.weight(1.1f),
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-            Text(
-                "Waktu",
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-                modifier = Modifier.weight(0.8f),
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-            Text(
-                "Hasil Diagnosa",
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-                modifier = Modifier.weight(1.5f),
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
+            Text("Tanggal", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold), modifier = Modifier.weight(1.1f), color = MaterialTheme.colorScheme.onPrimaryContainer)
+            Text("Waktu", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold), modifier = Modifier.weight(0.8f), color = MaterialTheme.colorScheme.onPrimaryContainer)
+            Text("Hasil Diagnosa", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold), modifier = Modifier.weight(1.5f), color = MaterialTheme.colorScheme.onPrimaryContainer)
         }
     }
 }
 
-// --- KOMPONEN: HISTORY ROW ITEM ---
 @Composable
 fun HistoryRowItem(
-    item: com.example.healthcare.domain.model.DiagnosisHistory, // Pastikan import sesuai model kamu
-    isLast: Boolean
+    item: DiagnosisHistory,
+    isLast: Boolean,
+    onDeleteClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -308,35 +362,44 @@ fun HistoryRowItem(
                 .fillMaxWidth()
                 .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Tanggal
             Text(
                 text = item.tanggal,
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.weight(1.1f),
+                modifier = Modifier.weight(1f),
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            // Waktu
             Text(
                 text = item.waktu,
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.weight(0.8f),
+                modifier = Modifier.weight(0.7f),
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            // Hasil (Highlighted)
-            Column(modifier = Modifier.weight(1.5f)) {
+            Column(modifier = Modifier.weight(1.3f)) {
                 Text(
                     text = item.penyakit,
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
+                    maxLines = 1
                 )
                 Text(
-                    text = "${String.format("%.2f", item.persentase)}%",
+                    text = "${String.format("%.1f", item.persentase)}%",
                     style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            IconButton(
+                onClick = onDeleteClick,
+                modifier = Modifier.size(24.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.DeleteOutline,
+                    contentDescription = "Hapus",
+                    tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f)
                 )
             }
         }

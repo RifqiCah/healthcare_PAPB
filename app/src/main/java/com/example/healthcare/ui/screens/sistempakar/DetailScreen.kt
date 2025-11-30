@@ -299,7 +299,7 @@ fun DetailScreen(
                         }
                     }
                     // Spacer bawah agar scroll bisa mentok sampai tombol
-                    Spacer(modifier = Modifier.height(100.dp))
+                    Spacer(modifier = Modifier.height(80.dp))
                 }
             }
         }

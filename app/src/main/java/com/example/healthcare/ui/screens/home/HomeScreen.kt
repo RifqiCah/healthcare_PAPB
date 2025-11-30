@@ -35,6 +35,7 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     onSistemPakarClick: () -> Unit,
     onArtikelClick: () -> Unit
+    // Kita hapus viewModel di sini karena logika cek history sudah tidak dipakai di Home
 ) {
     var visible by remember { mutableStateOf(false) }
 
@@ -45,23 +46,23 @@ fun HomeScreen(
         visible = true
     }
 
-    // --- STRUKTUR UTAMA ---
+    // --- STRUKTUR UTAMA (LAYER STACKING) ---
     Box(
-        modifier = modifier
-            .fillMaxSize()
-
+        modifier = modifier.fillMaxSize()
     ) {
-        // LAYER 1: BACKGROUND HEADER
+        // LAYER 1: BACKGROUND HEADER (GAMBAR)
         AnimatedHeroSection(
             modifier = Modifier.align(Alignment.TopCenter)
         )
 
-        // LAYER 2: KONTEN UTAMA
+        // LAYER 2: KONTEN UTAMA (LEMBARAN MELENGKUNG)
         Surface(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 270.dp)
-                .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)).background(
+                .padding(top = 270.dp) // Turunkan agar gambar Hero terlihat sebagian
+                .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
+                // Background Gradient pada Surface agar terlihat di atas box utama
+                .background(
                     brush = Brush.verticalGradient(
                         colors = listOf(
                             MaterialTheme.colorScheme.primaryContainer, // Atas
@@ -70,7 +71,7 @@ fun HomeScreen(
                         )
                     )
                 ),
-            color = Color.Transparent,
+            color = Color.Transparent, // Transparent agar background gradient modifier muncul
         ) {
             Column(
                 modifier = Modifier
@@ -81,7 +82,7 @@ fun HomeScreen(
             ) {
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // Welcome Card (Kita kirim aksi klik ke sini)
+                // Welcome Card
                 AnimatedVisibility(
                     visible = visible,
                     enter = fadeIn(animationSpec = tween(800, delayMillis = 100)) +
@@ -91,7 +92,6 @@ fun HomeScreen(
                             )
                 ) {
                     WelcomeCard(
-                        // ✅ SAAT DIKLIK, TAMPILKAN DIALOG
                         onAboutClick = { showAboutDialog = true }
                     )
                 }
@@ -140,12 +140,12 @@ fun HomeScreen(
                         Icons.AutoMirrored.Filled.Article,
                         onArtikelClick
                     ),
-                    // TODO: Bagian Hasil Analisa nanti kita kerjakan setelah ini
+                    //  HASIL ANALISA: Langsung arahkan ke Dashboard Sistem Pakar
                     ServiceData(
                         "Hasil Analisa",
                         "Lihat Riwayat Analisa Anda",
                         Icons.Default.Assessment,
-                        { /* Logika History Nanti */ }
+                        onClick = { onSistemPakarClick() }
                     )
                 )
 
@@ -178,7 +178,7 @@ fun HomeScreen(
             }
         }
 
-        // --- LAYER 3: POP UP DIALOG (JIKA showAboutDialog == true) ---
+        // LAYER 3: POP UP DIALOG TENTANG KITA
         if (showAboutDialog) {
             AboutAppDialog(
                 onDismiss = { showAboutDialog = false }
@@ -187,7 +187,7 @@ fun HomeScreen(
     }
 }
 
-// --- COMPONENT BARU: DIALOG TENTANG KITA ---
+// --- COMPONENT: DIALOG TENTANG KITA ---
 @Composable
 fun AboutAppDialog(onDismiss: () -> Unit) {
     AlertDialog(
@@ -242,7 +242,7 @@ data class ServiceData(
     val onClick: () -> Unit
 )
 
-// --- COMPONENTS LAINNYA ---
+// --- COMPONENTS VISUAL (HERO, CARD, ETC) ---
 
 @Composable
 fun AnimatedHeroSection(modifier: Modifier = Modifier) {
@@ -341,43 +341,41 @@ fun WelcomeCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp), // Tambah sedikit margin vertikal
-        shape = RoundedCornerShape(24.dp), // Sudut lebih bulat
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp), // Tambah elevasi agar "pop up"
+            .padding(vertical = 8.dp),
+        shape = RoundedCornerShape(24.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.Transparent // Transparent agar gradient di bawahnya terlihat
+            containerColor = Color.Transparent
         )
     ) {
-        // BOX UTAMA UNTUK LAYER BACKGROUND & KONTEN
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                // BACKGROUND GRADIENT (Kombinasi Cyan ke Biru Muda)
                 .background(
                     Brush.linearGradient(
                         colors = listOf(
-                            MaterialTheme.colorScheme.primary,       // Cyan (Kiri Atas)
-                            MaterialTheme.colorScheme.secondaryContainer, // Biru Muda (Kanan Bawah)
+                            MaterialTheme.colorScheme.primary,       // Cyan
+                            MaterialTheme.colorScheme.secondaryContainer, // Biru Muda
                         ),
                         start = androidx.compose.ui.geometry.Offset(0f, 0f),
                         end = androidx.compose.ui.geometry.Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
                     )
                 )
         ) {
-            // LAYER 1: BACKGROUND PATTERN / DEKORASI (Opsional, menggunakan Ikon besar transparan)
+            // Dekorasi Icon
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(180.dp), // Sesuaikan tinggi
+                    .height(180.dp),
                 contentAlignment = Alignment.CenterEnd
             ) {
                 Icon(
-                    imageVector = Icons.Default.MedicalServices, // Ikon latar belakang
+                    imageVector = Icons.Default.MedicalServices,
                     contentDescription = null,
-                    tint = Color.White.copy(alpha = 0.4f), // Sangat transparan
+                    tint = Color.White.copy(alpha = 0.15f),
                     modifier = Modifier
                         .size(160.dp)
-                        .offset(x = 40.dp, y = (-20).dp) // Geser sedikit keluar
+                        .offset(x = 40.dp, y = (-20).dp)
                         .scale(1.2f)
                 )
             }
@@ -412,14 +410,13 @@ fun WelcomeCard(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // TOMBOL TENTANG KITA (Lebih Menonjol)
                 Button(
                     onClick = onAboutClick,
-                    shape = RoundedCornerShape(50), // Bentuk kapsul
+                    shape = RoundedCornerShape(50),
                     modifier = Modifier.height(50.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.surface, // Tombol putih
-                        contentColor = MaterialTheme.colorScheme.primary // Teks Cyan
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        contentColor = MaterialTheme.colorScheme.primary
                     ),
                     elevation = ButtonDefaults.buttonElevation(
                         defaultElevation = 4.dp,

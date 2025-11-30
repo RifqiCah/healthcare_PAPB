@@ -55,15 +55,7 @@ fun GejalaScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.primaryContainer, // Atas
-                        MaterialTheme.colorScheme.primaryContainer, // Tengah
-                        MaterialTheme.colorScheme.surface           // Bawah
-                    )
-                )
-            )
+
     ) {
 
         // ==========================================================
